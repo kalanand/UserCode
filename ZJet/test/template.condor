@@ -1,0 +1,10 @@
+universe = vanilla
+Executable = {EXECUTABLE}
+Requirements   =  OpSys == "LINUX" && (Arch =="INTEL" || Arch =="x86_64")
+Should_Transfer_Files = NO
+Output = {OUTPUT}
+Error  = {ERROR}
+Log    = {LOG}
++UseSL4=TRUE
+notify_user = {NOTIFY}
+Queue 1

@@ -1,0 +1,26 @@
+ ########################################################################
+ #########   TagJet Collection ########################################
+ ########################################################################
+
+    include "JetMETCorrections/ZJet/data/CaloJetCollections.cfi"
+
+       module caloJetCollectionClone = CaloJetShallowCloneProducer{
+         InputTag src = ic5CaloJetsClean
+       }
+
+       module caloJetSele = PtMinCandSelector{
+        InputTag src = caloJetCollectionClone
+        double ptMin        = 10.0
+       }
+
+       module tagJet = CandJetFlavourIdentifier{
+         InputTag jets = caloJetSele
+         double coneSizeToAssociate = 0.3
+         bool physicsDefinition = true
+         bool debug = false
+         vstring vetoFlavour = {  }
+       }
+
+       sequence TagJetPath = {caloJetCollectionClone, 
+                              caloJetSele, 
+                              tagJet}

@@ -1,0 +1,29 @@
+<use name=root>
+<use name=boost>
+<use name=FWCore/Framework>
+<use name=FWCore/MessageLogger>
+<use name=FWCore/PluginManager>
+<use name=FWCore/ParameterSet>
+<use name=SimDataFormats/HepMCProduct>
+<use name=DataFormats/CaloTowers>
+<use name=DataFormats/Common>
+<use name=DataFormats/DetId>
+<use name=DataFormats/EcalRecHit>
+<use name=DataFormats/EgammaReco>
+<use name=DataFormats/GeometryVector>
+<use name=DataFormats/HcalRecHit>
+<use name=DataFormats/JetReco>
+<use name=DataFormats/TrackReco>
+<use name=Geometry/CaloTopology>
+<use name=Geometry/CaloGeometry>
+<use name=Geometry/CaloEventSetup>
+<use name=Geometry/EcalPreshowerAlgo>
+<use name=RecoBTag/MCTools>
+<use name=RecoEgamma/EgammaTools>
+<use name=RecoCaloTools/Selectors>
+<use name=JetMETCorrections/Objects>
+<flags EDM_PLUGIN=1>
+<export>
+   <lib name=JetMETCorrectionsZJet>
+   <use name=JetMETCorrections/Objects>
+</export>

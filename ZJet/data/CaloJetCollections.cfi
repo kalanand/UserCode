@@ -1,0 +1,59 @@
+       module ic5CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = iterativeCone5CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "ic5CaloJetsClean"
+       }
+
+       module ic7CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = iterativeCone7CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "ic7CaloJetsClean"
+       }
+
+       module sc5CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = sisCone5CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "sc5CaloJetsClean"
+       }
+
+       module sc7CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = sisCone7CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "sc7CaloJetsClean"
+       }
+
+       module mp5CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = midPointCone5CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "mp5CaloJetsClean"
+       }
+
+       module mp7CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = midPointCone7CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "mp7CaloJetsClean"
+       }
+
+       module kt4CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = fastjet4CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "kt4CaloJetsClean"
+       }
+
+       module kt6CaloJetsClean = CaloJetCleaner {
+         InputTag srcJets     = fastjet6CaloJets
+         VInputTag srcObjects = {selectElectronCands} 
+         double deltaRMin     = 0.3
+         string module_label  = "kt6CaloJetsClean"
+       }
+
+       sequence CaloJetPath = {ic5CaloJetsClean, ic7CaloJetsClean,
+                               mp5CaloJetsClean, mp7CaloJetsClean, 
+                               kt6CaloJetsClean} 

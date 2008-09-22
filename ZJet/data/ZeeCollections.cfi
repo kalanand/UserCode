@@ -1,0 +1,33 @@
+
+       module allElectrons = GsfElectronCloneProducer {
+          InputTag src = pixelMatchGsfElectrons
+       }
+
+
+       module selectElectrons = PixelMatchGsfElectronSelector {
+          InputTag src = pixelMatchGsfElectrons
+          string cut = "pt > 20.0 & ( abs( eta ) < 1.4442 | (abs( eta ) > 1.560 & abs( eta ) < 2.5))"
+        }
+
+
+       module selectElectronCands = GsfElectronCloneProducer {
+          InputTag src = selectElectrons
+       }
+
+
+
+        module zToEE = CandShallowCloneCombiner {
+               	string decay = "selectElectronCands@+ selectElectronCands@-"
+		string cut = "60 < mass < 120"
+	}
+
+
+        module bestZToEE = LargestPtCandViewSelector {
+         InputTag src = zToEE 
+         uint32 maxNumber = 1
+        }
+
+       sequence ZeePath = {pixelMatchGsfElectrons, allElectrons, 
+                           selectElectrons, selectElectronCands, 
+                           zToEE, bestZToEE}
+

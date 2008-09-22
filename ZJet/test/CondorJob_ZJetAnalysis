@@ -1,0 +1,9 @@
+universe = vanilla 
+Executable = ZJetAnalysis.csh 
+Requirements = Memory >= 199 &&OpSys == "LINUX"&& (Arch != "DUMMY" ) 
+Should_Transfer_Files = NO 
+Output = /uscms_data/d1/kalanand/trash/ZJetAnalysis.stdout 
+Error = /uscms_data/d1/kalanand/trash/ZJetAnalysis.stderr 
+Log = /uscms_data/d1/kalanand/trash/ZJetAnalysis.condorlog 
+notify_user = kalanand@FNAL.GOV 
+Queue 1 
