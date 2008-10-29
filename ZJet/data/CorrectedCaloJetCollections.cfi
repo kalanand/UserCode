@@ -33,9 +33,4 @@
          string module_label  = "kt6CaloJetsCor"
        }
 
-       sequence CorJetPath = {L3JetCorJetIcone5, L3JetCorJetIcone7,
-                              L3JetCorJetMcone5, L3JetCorJetMcone7,
-                              L3JetCorJetFKt6, 
-                              ic5CaloJetsCor, ic7CaloJetsCor,
-                              mp5CaloJetsCor, mp7CaloJetsCor, 
-                              kt6CaloJetsCor} 
+       sequence CorJetPath = {L3JetCorJetIcone5, ic5CaloJetsCor} 

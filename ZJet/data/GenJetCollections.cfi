@@ -57,6 +57,4 @@
        }
 
 
-       sequence GenJetPath = {ic5GenJetsClean, ic7GenJetsClean,
-                              mp5GenJetsClean, mp7GenJetsClean, 
-                              kt6GenJetsClean}
+       sequence GenJetPath = {ic5GenJetsClean}

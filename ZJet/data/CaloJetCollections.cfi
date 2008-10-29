@@ -54,6 +54,4 @@
          string module_label  = "kt6CaloJetsClean"
        }
 
-       sequence CaloJetPath = {ic5CaloJetsClean, ic7CaloJetsClean,
-                               mp5CaloJetsClean, mp7CaloJetsClean, 
-                               kt6CaloJetsClean} 
+       sequence CaloJetPath = {ic5CaloJetsClean} 
