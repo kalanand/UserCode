@@ -1,0 +1,10 @@
+universe = vanilla 
+Executable = /uscms/home/kalanand/cms/electron/efficiency/CMSSW_2_2_1/src/PhysicsTools/TagAndProbe/test/csh_electronTP_ZeeOn_et.csh 
+Requirements = Memory >= 199 &&OpSys == "LINUX"&& (Arch != "DUMMY" ) 
+Should_Transfer_Files = YES 
+WhenTOTransferOutput  = ON_EXIT 
+Output = events_ZeeOn_et.stdout 
+Error = events_ZeeOn_et.stderr 
+Log = events_ZeeOn_et.condorlog 
+notify_user = kalanand@FNAL.GOV 
+Queue 1 
