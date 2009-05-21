@@ -15,6 +15,8 @@
 
 GenericElectronSelection::GenericElectronSelection(const edm::ParameterSet &params)
 {
+
+  histogramFile_    = params.getParameter<std::string>("histogramFile");
   _inputProducer = 
     params.getUntrackedParameter<std::string>("src", "pixelMatchGsfElectrons");
   _BarrelMaxEta  = params.getUntrackedParameter<double>("BarrelMaxEta", 1.4442);
@@ -58,7 +60,9 @@ GenericElectronSelection::GenericElectronSelection(const edm::ParameterSet &para
 
   if(_requireID)
     elecIDSrc_     = params.getParameter<edm::InputTag>("electronIDSource");
-
+  tkIsoTag         = params.getParameter<edm::InputTag>("eleIsoTk");
+  ecalIsoTag       = params.getParameter<edm::InputTag>("eleIsoEcal");
+  hcalIsoTag       = params.getParameter<edm::InputTag>("eleIsoHcal");
 
   const edm::InputTag dSummaryObj( "hltTriggerSummaryAOD","","HLT" );
   triggerSummaryLabel_ = 
@@ -109,11 +113,8 @@ void GenericElectronSelection::produce(edm::Event &event, const edm::EventSetup 
 
 
      // --------- get track isolation value map
-   edm::InputTag tkIsoTag("eleIsoFromDepsTk");
    const edm::ValueMap<double>& tkIsoMap = getValueMap(event, tkIsoTag);
-   edm::InputTag ecalIsoTag("eleIsoFromDepsEcalFromHits");
    const edm::ValueMap<double>& ecalIsoMap = getValueMap(event, ecalIsoTag);
-   edm::InputTag hcalIsoTag("eleIsoFromDepsHcalFromHits");
    const edm::ValueMap<double>& hcalIsoMap = getValueMap(event, hcalIsoTag);
 
 
@@ -214,6 +215,33 @@ void GenericElectronSelection::produce(edm::Event &event, const edm::EventSetup 
        std::cout << "trigresult = " << trigresult << std::endl;
      }
 
+     // Fill all the histograms
+     if( cutresult && idresult && trigresult ) {       
+       TString hname;
+       hname = "deltaEta";
+       FillHist(hname,m_HistNames1D,deltaEta);
+       hname = "deltaPhi";
+       FillHist(hname,m_HistNames1D,deltaPhi);
+       hname = "sigmaIetaIeta";
+       FillHist(hname,m_HistNames1D,sigmaEtaEta);
+       hname = "trackIso";
+       FillHist(hname,m_HistNames1D,tkIsolation);
+       hname = "ecalIso";
+       FillHist(hname,m_HistNames1D,ecalIsolation);
+       hname = "hcalIso";
+       FillHist(hname,m_HistNames1D,hcalIsolation);
+       hname = "elecId";
+       FillHist(hname,m_HistNames1D,electronId);
+       hname = "elecEta";
+       FillHist(hname,m_HistNames1D,elecEta);
+       hname = "elecPhi";
+       FillHist(hname,m_HistNames1D,elecPhi);
+       hname = "elecE";
+       FillHist(hname,m_HistNames1D,elecE);
+       hname = "elecEt";
+       FillHist(hname,m_HistNames1D,elecEt);
+     }
+
      ++index;
    }
    //
@@ -224,6 +252,18 @@ void GenericElectronSelection::produce(edm::Event &event, const edm::EventSetup 
 
 
 
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+void GenericElectronSelection::FillHist(const TString& histName, std::map<TString, TH1*> 
+					HistNames, const double& x) 
+{
+  std::map<TString, TH1*>::iterator hid = HistNames.find(histName);
+  if (hid==HistNames.end())
+    std::cout << "%fillHist -- Could not find histogram with name: " << histName << std::endl;
+  else
+    hid->second->Fill(x);
+}
 
 
 
@@ -370,9 +410,48 @@ const edm::ValueMap<double>& GenericElectronSelection::getValueMap(const edm::Ev
 
 // --------- method called once each job just before starting event loop  ---
 
-void GenericElectronSelection::beginJob(const edm::EventSetup &eventSetup) { }
+void GenericElectronSelection::beginJob(const edm::EventSetup &eventSetup) { 
 
-void GenericElectronSelection::endJob() { }
+  m_file_ = new TFile(histogramFile_.c_str(),"RECREATE");
+  TString hname;
+  hname = "deltaEta";
+  m_HistNames1D[hname] = new TH1F(hname,hname,1000, -0.1, 0.1); 
+  hname = "deltaPhi";
+  m_HistNames1D[hname] = new TH1F(hname,hname,1000, -0.1, 0.1); 
+  hname = "sigmaIetaIeta";
+  m_HistNames1D[hname] = new TH1F(hname,hname,1000, 0.0, 0.2); 
+  hname = "trackIso";
+  m_HistNames1D[hname] = new TH1F(hname,hname,10000, 0, 100); 
+  hname = "ecalIso";
+  m_HistNames1D[hname] = new TH1F(hname,hname,10000, 0, 100); 
+  hname = "hcalIso";
+  m_HistNames1D[hname] = new TH1F(hname,hname,10000, 0, 100); 
+  hname = "elecId";
+  m_HistNames1D[hname] = new TH1F(hname,hname,10, -5, 5); 
+  hname = "elecEta";
+  m_HistNames1D[hname] = new TH1F(hname,hname,1000, -3, 3); 
+  hname = "elecPhi";
+  m_HistNames1D[hname] = new TH1F(hname,hname,1000, -3.5, 3.5); 
+  hname = "elecE";
+  m_HistNames1D[hname] = new TH1F(hname,hname,5000, 0, 500); 
+  hname = "elecEt";
+  m_HistNames1D[hname] = new TH1F(hname,hname,5000, 0, 500); 
+}
+
+
+
+void GenericElectronSelection::endJob() { 
+
+  if (m_file_ !=0) 
+    {
+      m_file_->cd();
+      for (std::map<TString, TH1*>::iterator hid = m_HistNames1D.begin(); 
+	   hid != m_HistNames1D.end(); hid++)
+        hid->second->Write();
+      delete m_file_;
+      m_file_ = 0;      
+    }
+}
 
 
 

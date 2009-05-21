@@ -17,7 +17,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 process.GlobalTag.globaltag = cms.string('IDEAL_V11::All')
 
 process.source = cms.Source("PoolSource",
-                            skipEvents = cms.untracked.uint32(600000),
+                            skipEvents = cms.untracked.uint32(150000),
                             fileNames = cms.untracked.vstring(
         '/store/mc/Summer08/Zee/GEN-SIM-RECO/IDEAL_V11_redigi_v2/0007/D408618C-AA00-DE11-BACE-001A64789CF0.root',
         '/store/mc/Summer08/Zee/GEN-SIM-RECO/IDEAL_V11_redigi_v2/0008/04222547-2400-DE11-A852-00151715C58C.root',
@@ -210,7 +210,7 @@ process.source = cms.Source("PoolSource",
 
 
 process.maxEvents = cms.untracked.PSet(
-    input = cms.untracked.int32(-1)
+    input = cms.untracked.int32(200000)
 )
 
 process.MessageLogger.destinations = ['cout', 'cerr']
@@ -222,6 +222,50 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 #####################################################################################
 #####################################################################################
 #####################################################################################
+
+#  electron isolation  ################
+# 
+
+process.eleIsoFromDepsTk = cms.EDFilter("CandIsolatorFromDeposits",
+   deposits = cms.VPSet(cms.PSet(
+       mode = cms.string('sum'),
+       src = cms.InputTag("eleIsoDepositTk"),
+       weight = cms.string('1'),
+       deltaR = cms.double(0.3),
+       vetos = cms.vstring('0.015','Threshold(1.0)'),
+       skipDefaultVeto = cms.bool(True)
+   ))
+)
+
+process.eleIsoFromDepsEcalFromHits = cms.EDFilter("CandIsolatorFromDeposits",
+   deposits = cms.VPSet(cms.PSet(
+       mode = cms.string('sum'),
+       src = cms.InputTag("eleIsoDepositEcalFromHits"),
+       weight = cms.string('1'),
+       deltaR = cms.double(0.4),      ### DR cone
+       vetos = cms.vstring('EcalBarrel:0.045',   ### inner cone
+
+                           'EcalBarrel:RectangularEtaPhiVeto(-0.02,0.02,-0.5,0.5)',
+                           ## Jurassic parameters in eta and phi
+                           'EcalBarrel:ThresholdFromTransverse(0.08)',   ## ET cut
+                           'EcalEndcaps:ThresholdFromTransverse(0.3)',
+                           'EcalEndcaps:0.070',
+                           'EcalEndcaps:RectangularEtaPhiVeto(-0.02,0.02,-0.5,0.5)'),
+       skipDefaultVeto = cms.bool(True)
+       ))
+)
+process.eleIsoFromDepsHcalFromHits = cms.EDFilter("CandIsolatorFromDeposits",
+   deposits = cms.VPSet(cms.PSet(
+       src = cms.InputTag("eleIsoDepositHcalFromHits"),
+       deltaR = cms.double(0.4),
+       weight = cms.string('1'),
+       vetos = cms.vstring('0.0'),
+       skipDefaultVeto = cms.bool(True),
+       mode = cms.string('sum')
+   ))
+)
+
+
 
 
 #  SuperClusters  ################
@@ -295,7 +339,10 @@ process.ZeeOffline = cms.EDFilter("GenericElectronSelection",
                                   deltaEtaCutBarrel  = cms.untracked.double(0.0071),
                                   deltaEtaCutEndcaps = cms.untracked.double(0.0066),
                                   sigmaEtaEtaCutBarrel = cms.untracked.double(0.010),
-                                  sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028)
+                                  sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028),
+                                  eleIsoTk = cms.InputTag("eleIsoFromDepsTk"),
+                                  eleIsoEcal = cms.InputTag("eleIsoFromDepsEcalFromHits"),
+                                  eleIsoHcal = cms.InputTag("eleIsoFromDepsHcalFromHits")
                                   )
 
 
@@ -313,7 +360,10 @@ process.ZeeOnline = cms.EDFilter("GenericElectronSelection",
                                  deltaEtaCutBarrel  = cms.untracked.double(0.0071),
                                  deltaEtaCutEndcaps = cms.untracked.double(0.0066),
                                  sigmaEtaEtaCutBarrel = cms.untracked.double(0.010),
-                                 sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028)
+                                 sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028),
+                                 eleIsoTk = cms.InputTag("eleIsoFromDepsTk"),
+                                 eleIsoEcal = cms.InputTag("eleIsoFromDepsEcalFromHits"),
+                                 eleIsoHcal = cms.InputTag("eleIsoFromDepsHcalFromHits")
                                  )
 
 
@@ -334,7 +384,10 @@ process.WenuOffline = cms.EDFilter("GenericElectronSelection",
                                    deltaPhiCutBarrel  = cms.untracked.double(0.025),
                                    deltaPhiCutEndcaps = cms.untracked.double(0.020),
                                    sigmaEtaEtaCutBarrel = cms.untracked.double(0.0099),
-                                   sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028)
+                                   sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028),
+                                   eleIsoTk = cms.InputTag("eleIsoFromDepsTk"),
+                                   eleIsoEcal = cms.InputTag("eleIsoFromDepsEcalFromHits"),
+                                   eleIsoHcal = cms.InputTag("eleIsoFromDepsHcalFromHits")
                                    )
 
 
@@ -354,7 +407,10 @@ process.WenuOnline = cms.EDFilter("GenericElectronSelection",
                                   deltaPhiCutBarrel  = cms.untracked.double(0.025),
                                   deltaPhiCutEndcaps = cms.untracked.double(0.020),
                                   sigmaEtaEtaCutBarrel = cms.untracked.double(0.0099),
-                                  sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028)
+                                  sigmaEtaEtaCutEndcaps = cms.untracked.double(0.028),
+                                  eleIsoTk = cms.InputTag("eleIsoFromDepsTk"),
+                                  eleIsoEcal = cms.InputTag("eleIsoFromDepsEcalFromHits"),
+                                  eleIsoHcal = cms.InputTag("eleIsoFromDepsHcalFromHits")
                                   )
 
 
@@ -513,7 +569,10 @@ process.TPEdm = cms.EDProducer("TagProbeEDMNtuple",
 
 
 
-
+process.iso_sequence = cms.Sequence( process.eleIsoFromDepsTk *
+                                     process.eleIsoFromDepsEcalFromHits *
+                                     process.eleIsoFromDepsHcalFromHits)
+    
 process.sc_sequence = cms.Sequence( (process.HybridSuperClusters *
                                      process.EBSuperClusters +
                                      process.EndcapSuperClusters *
@@ -534,13 +593,13 @@ process.truthMatch_sequence = cms.Sequence( process.WenuOfflineMatch +
                                             process.probeMatchAll20 +
                                             process.probeMatchAll30 )
 
-process.lepton_cands = cms.Sequence( process.sc_sequence *
+process.lepton_cands = cms.Sequence( process.sc_sequence * process.iso_sequence *
                                      process.electron_sequence *
                                      process.tpMap_sequence *
                                      process.truthMatch_sequence)
 
 process.outpath = cms.OutputModule("PoolOutputModule",
-                                   outputCommands = cms.untracked.vstring('drop *','keep *_TPEdm_*_*'),
+                                  outputCommands = cms.untracked.vstring('drop *','keep *_TPEdm_*_*'),
                                    fileName = cms.untracked.string('/uscms_data/d2/kalanand/Summer08-Zee/Georgios/ntuple_Summer08_ridigi_4.root')
                                    )
 

@@ -3,6 +3,12 @@
 
 // system include files
 #include <memory>
+#include "TH1.h"
+#include "TString.h"
+#include "TNamed.h"
+#include "TFile.h"
+#include <vector>
+#include <map>
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -40,7 +46,13 @@ class GenericElectronSelection : public edm::EDProducer
 
   bool CheckTriggerMatch( edm::Handle<trigger::TriggerEvent> triggerObj,
 			  double eta, double phi);
+  void FillHist(const TString& histName, std::map<TString, TH1*> 
+		HistNames, const double& x);
   // ----------member data ---------------------------
+
+  std::string histogramFile_;
+  TFile* m_file_;
+  std::map<TString, TH1*> m_HistNames1D;
 
   bool _removeDuplicates;
   bool _requireID;
@@ -70,6 +82,10 @@ class GenericElectronSelection : public edm::EDProducer
   double hcalIsoCutBarrel_;
   double hcalIsoCutEndcaps_;
 
+
+  edm::InputTag  tkIsoTag;
+  edm::InputTag  ecalIsoTag;
+  edm::InputTag  hcalIsoTag;
   edm::InputTag  elecIDSrc_;
   edm::InputTag  triggerSummaryLabel_;
   edm::InputTag  hltFilter_;
