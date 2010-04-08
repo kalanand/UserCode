@@ -187,6 +187,8 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    lower_weight = 0.1;
    upper_weight = 0.1;
 
+   //invMass.setRange( TMath::Max(minMass, 0.5*mass), TMath::Min( maxMass, 1.5*mass) );
+
 
    // define RooDataHist from an existing histogram
    RooDataHist sigDataHistLow("sigDataHistLow","",  invMass, lower_hist, lower_weight);
@@ -222,25 +224,30 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    // Construct interpolating pdf in (x,a) represent g1(x) at a=a_min
    // and g2(x) at a=a_max
    RooIntegralMorph sigModel("sigModel","sigModel",g1,g2,invMass,alpha) ;
+   RooRealVar Nsig("Nsig", "# signal events", 0.0, 0.0, 10000000.0);
+
 
    //////////////////////////////////////////////
    // make QCD model
    RooRealVar a1("a1","a1", -16.63, -50., 50.) ;  
    RooRealVar a2("a2","a2", 15.3, 0., 50.) ; 
-   RooRealVar a3("a3","a3", 3.0, 0., 3.8) ; 
+   RooRealVar a3("a3","a3", 3.0, -10., 3.8) ; 
    RooGenericPdf qcdModel("qcdModel",
    "pow(1-invMass/10000.,a1)/pow(invMass/10000.,a2+a3*log10(invMass/10000.))",
    RooArgList(invMass,a1,a2, a3)); 
+   RooRealVar Nbkg("Nbkg", "# background events", 10.0, 0.0, 10000000.0);
+
 
    //////////////////////////////////////////////
    // combined model
    // Introduce mu: the signal strength in units of the expectation.  
    // eg. mu = 1 is the SM, mu = 0 is no signal, mu=2 is 2x the SM
-   RooRealVar mu("mu","signal strength in units of SM expectation",0.01,0.,1.) ; 
+   //  RooRealVar mu("mu","signal strength in units of SM expectation",0.01,0.,1.) ; 
+
 
    // full model
    RooAddPdf model("model","sig+qcd background",RooArgList(sigModel,qcdModel),
-		   RooArgList(mu)); 
+   RooArgList(Nsig, Nbkg)); 
 
 
 //set the precision for the integral of the model here
@@ -263,6 +270,9 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    tdrStyle->SetOptStat(0); 
    tdrStyle->SetStatColor(1);
 
+/*   
+
+   ////// for debug ==> to make sure that I can generate the pdf shape
    TCanvas* cmc;
    RooPlot* frame;
    RooDataSet *toydata;
@@ -280,6 +290,8 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
       frame->SetTitle("signal + background model");
       frame->Draw() ;
    }
+*/
+
 
    // Main interface to get a HypoTestResult.
    // It does two fits:
@@ -298,8 +310,10 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
 
 
    // here we explicitly fit for the null hypothesis
-   RooFitResult* fit2 = qcdModel.fitTo(data, Hesse(kFALSE),Minos(kTRUE),
-   Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE));
+   Nsig.setVal(0.0);
+   Nsig.setConstant(kTRUE);
+   RooFitResult* fit2 = model.fitTo(data, Hesse(kFALSE),Minos(kTRUE),
+   Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE), Extended(kTRUE));
    Double_t NLLatCondMLE= fit2->minNll();
    fit2->Print();
 
@@ -309,7 +323,7 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
       cdataNull = new TCanvas("cdataNull","fit with null hypothesis",500,500);
       frame = invMass.frame() ; 
       data.plotOn(frame ) ; 
-      qcdModel.plotOn(frame, LineColor(kBlue)) ;   
+      model.plotOn(frame, LineColor(kBlue)) ;   
       model.paramOn(frame, Layout(0.4, 0.85, 0.92)); 
       gPad->SetLogy();
       frame->GetYaxis()->SetNoExponent();
@@ -327,8 +341,9 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    //                                                   |___/|_|           
 
    // calculate MLE for the signal hypothesis
+   Nsig.setConstant(kFALSE);
    RooFitResult* fit = model.fitTo(data,Hesse(kFALSE),Minos(kTRUE),
-   Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE));
+   Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE), Extended(kTRUE));
    fit->Print();
    Double_t NLLatMLE= fit->minNll();
 
@@ -381,20 +396,6 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    cout << "Corresponding to a signal signifcance of " << significance << endl;
    cout << "-------------------------------------------------\n\n" << endl;
 
-   RooAbsReal* nll =model.createNLL(data) ;
-   float mCL[1000];
-   float mMU[1000];
-   float nllVal;
-
-   for (int j=0; j<1000; j++) {
-      mu.setVal(0.0001*j);
-      mMU[j] = mu.getVal();
-      nllVal = nll->getVal();
-      if(nllVal<NLLatCondMLE)
-         mCL[j] = 1.0 - SignificanceToPValue(sqrt( 2*(NLLatCondMLE-nllVal)));
-      else mCL[j] = 0.0;
-   }
-
 
    //        _       _      ____ _     
    //  _ __ | | ___ | |_   / ___| |    
@@ -403,20 +404,21 @@ double SignificanceCalculatorBinned(double mass, bool drawFitResults=true) {
    // | .__/|_|\___/ \__|  \____|_____|
    // |_|                              
 
+   ///// compute NLL
+   RooAbsReal* nll = model.createNLL( data, Extended()) ;
+   RooAbsReal* pll = nll->createProfile(Nsig) ;
+   pll->addOwnedComponents(*nll) ;  // to avoid memory leak
 
    TCanvas* cnll;
-   TGraph* nllGraph;
-
+   RooPlot* frame1;
+   
    if(drawFitResults) {
-      nllGraph = new TGraph(1000, mMU, mCL);
-      nllGraph->GetXaxis()->SetTitle("#sigma(q*) / #sigma(QCD)");
-      nllGraph->GetYaxis()->SetTitle("Confidence Limit to exclude null hypo");
       cnll = new TCanvas("cnll","nll",500,500);
-      nllGraph->Draw("AP");
+      frame1 = Nsig.frame(Bins(10),Range( 0.01*Nsig.getVal(),10*Nsig.getVal()) ) ;
+      nll->plotOn(frame1) ;
+      pll->plotOn(frame1,LineColor(kRed)) ;
+      gPad->SetLogx();
    }
-
-
-
    return CLtoReturn;
 }
 
