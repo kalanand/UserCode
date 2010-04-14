@@ -48,7 +48,7 @@ void FitDijetMass_Data() {
 
   
   TFile *inf  = new TFile("MassResults_ak7calo.root");
-  TH1F *hCorMass     = (TH1F*) inf->Get("DiJetMass");
+  TH1F *hCorMassDen     = (TH1F*) inf->Get("DiJetMass");
 
 
   gROOT->ProcessLine(".L tdrstyle.C");
@@ -68,15 +68,24 @@ void FitDijetMass_Data() {
   func->SetParameter(1,3.975);
   func->SetParameter(2,5.302);
   func->SetParameter(3,-1.51);
-  hCorMass->Fit("func","","",50.0, 526.0); // QCD fit
-  hCorMass->SetXTitle("Corrected Dijet Mass (GeV)");
-  hCorMass->SetYTitle("Events/GeV");
-  hCorMass->GetYaxis()->SetTitleOffset(1.5);
-  hCorMass->SetMarkerStyle(20);
-  hCorMass->GetXaxis()->SetRangeUser(0.,600.);
-  hCorMass->Draw("ep");
+  hCorMassDen->Fit("func","LLI","",50.0, 526.0); // QCD fit
+  hCorMassDen->SetXTitle("Corrected Dijet Mass (GeV)");
+  hCorMassDen->SetYTitle("Events/GeV");
+  hCorMassDen->GetYaxis()->SetTitleOffset(1.5);
+  hCorMassDen->SetMarkerStyle(20);
+  hCorMassDen->GetXaxis()->SetRangeUser(0.,600.);
+  hCorMassDen->Draw("ep");
   c2->SetLogy(1);
 
+
+
+  TH1F *hCorMass     = hCorMassDen->Clone("hCorMass");
+
+
+  for(int i=0; i<hCorMass->GetNbinsX(); i++){
+    hCorMass->SetBinContent(i+1, hCorMassDen->GetBinContent(i+1) * hCorMassDen->GetBinWidth(i+1));
+    hCorMass->SetBinError(i+1, hCorMassDen->GetBinError(i+1) * hCorMassDen->GetBinWidth(i+1));
+  } 
 
 
 
@@ -121,7 +130,7 @@ void FitDijetMass_Data() {
   // than taking point at center of bin
 
    RooFitResult* fit = model.fitTo(data, Minos(kFALSE), Extended(kTRUE),
-				   SumW2Error(kFALSE),Save(kTRUE), Range(47.,526.),
+				   SumW2Error(kFALSE),Save(kTRUE), Range(54.,526.),
 				   Integrate(kTRUE) );
 
    // to perform chi^2 minimization fit instead
@@ -144,8 +153,8 @@ void FitDijetMass_Data() {
    dataPave->SetY1(0.77);
    gPad->SetLogy();
    frame1->GetYaxis()->SetNoExponent();
-   frame1->GetYaxis()->SetRangeUser(5E-3,5E+3);
-   frame1->GetYaxis()->SetTitle("Events / GeV");
+   frame1->GetYaxis()->SetRangeUser(5E-2,5E+4);
+   frame1->GetYaxis()->SetTitle("Events / bin");
    frame1->GetYaxis()->SetTitleOffset(1.35);
    frame1->SetTitle("fit to data with QCD lineshape");
    frame1->Draw() ;
