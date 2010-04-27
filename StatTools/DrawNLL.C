@@ -105,7 +105,7 @@ void DrawNLL(const double mResonance = 1000, const double xsection = 65.29) {
    // combined model
    // Introduce alpha: the signal strength in units of the expectation.  
    // eg. alpha = 1 is the SM, alpha = 0 is no signal, alpha=2 is 2x the SM
-   RooRealVar alpha("alpha","cross-section ratio", 1., 0., 100.);
+   RooRealVar alpha("alpha","cross-section ratio", 1., -100., 100.);
    RooFormulaVar ns("ns","alpha*Nsig",RooArgList(alpha,Nsig));
 
    // full model
@@ -139,7 +139,7 @@ void DrawNLL(const double mResonance = 1000, const double xsection = 65.29) {
    data.plotOn(frame ) ; 
    qcdModel.plotOn(frame, LineColor(kBlue), Normalization(0.65)) ;   
    // setting normalization by hand: 
-   // should be ratio of QCD function integral in range [400, 2000] / integral of the data histogram 
+   // should be ratio of QCD function integral in range [400, 2000] / integral of data histogram 
    gPad->SetLogy();
    frame->GetXaxis()->SetNdivisions(505);
    frame->GetYaxis()->SetNoExponent();
@@ -154,25 +154,61 @@ void DrawNLL(const double mResonance = 1000, const double xsection = 65.29) {
   // ----------------------------------------------
 
 
-   ///// plot NLL
+   ///// compute Likelihood, NLL
+   const int nPoints = 200;
+   const float eStep  = 0.05;
    RooAbsReal* nll = model.createNLL( data) ;
-   float mMU[10000];
-   float mNLL[10000];
+   float mMU[nPoints];
+   float mNLL[nPoints];
+   float mLH[nPoints];
+   float mUnNormLH[nPoints];
+   alpha.setVal(0.0);
+   float mNLL0 = nll->getVal();
 
-   for (int j=0; j<10000; j++) {
-     alpha.setVal(0.01*j);
+   for (int j=0; j<nPoints; j++) {
+     alpha.setVal( eStep*(j) );
      mMU[j] = xsection * alpha.getVal();
-     mNLL[j] = nll->getVal();
+     mUnNormLH[j]  = exp( - nll->getVal() + mNLL0 );
    }
 
-   TGraph* nllGraph = new TGraph(10000, mMU, mNLL);
+   // unnormalized likelihood => we need to compute its integral 
+   // and normalize to unity
+   TGraph* unlhGraph = new TGraph(nPoints, mMU, mUnNormLH);
+   double intg = Integral(*unlhGraph);
+
+   cout<< "un-normalized likelihood integral = " << intg << endl;
+
+   for (int j=0; j<nPoints; j++) {
+     mNLL[j] =  -log( mUnNormLH[j] / intg );
+     mLH[j]  = mUnNormLH[j] / intg;
+   }
+
+
+
+   // TGraph of Likelihood vs cross section 
+   TGraph* lhGraph = new TGraph(nPoints, mMU, mLH);
+   lhGraph->SetMarkerColor(4);
+   lhGraph->SetMarkerSize(0.5);
+   lhGraph->GetXaxis()->SetTitle("cross section (pb)");
+   lhGraph->GetYaxis()->SetTitle("Likelihood");
+
+
+   cout<< "normalized likelihood integral = " << Integral(*lhGraph) << endl;
+
+   // TGraph of NLL vs cross section  
+   TGraph* nllGraph = new TGraph(nPoints, mMU, mNLL);
    nllGraph->SetMarkerColor(4);
    nllGraph->SetMarkerSize(0.5);
    nllGraph->GetXaxis()->SetTitle("cross section (pb)");
    nllGraph->GetYaxis()->SetTitle("-log (Likelihood)");
+
+
+   // Draw the likelihood graphs
    TCanvas* cnll = new TCanvas("cnll","nll",500,500);
    nllGraph->Draw("AP");
-   gPad->SetLogx();
+   TCanvas* clh = new TCanvas("clh","lh",500,500);
+   lhGraph->Draw("AP");
+ 
 
 }
 
@@ -180,3 +216,44 @@ void DrawNLL(const double mResonance = 1000, const double xsection = 65.29) {
 
 
 
+//______________________________________________________________________________
+Double_t Integral(TGraph& graph, Int_t first=0, Int_t last=-1) const
+{
+   // Integrate the TGraph data within a given (index) range
+   // NB: if last=-1 (default) last is set to the last point.
+   //     if (first <0) the first point (0) is taken.
+   //   : The graph segments should not intersect.
+   //Method:
+   // There are many ways to calculate the surface of a polygon. It all depends on what kind of data
+   // you have to deal with. The most evident solution would be to divide the polygon in triangles and
+   // calculate the surface of them. But this can quickly become complicated as you will have to test
+   // every segments of every triangles and check if they are intersecting with a current polygon's
+   // segment or if it goes outside the polygon. Many calculations that would lead to many problems...
+   //      The solution (implemented by R.Brun)
+   // Fortunately for us, there is a simple way to solve this problem, as long as the polygon's
+   // segments don't intersect.
+   // It takes the x coordinate of the current vertex and multiply it by the y coordinate of the next
+   // vertex. Then it subtracts from it the result of the y coordinate of the current vertex multiplied
+   // by the x coordinate of the next vertex. Then divide the result by 2 to get the surface/area.
+   //      Sources
+   //      http://forums.wolfram.com/mathgroup/archive/1998/Mar/msg00462.html
+   //      http://stackoverflow.com/questions/451426/how-do-i-calculate-the-surface-area-of-a-2d-polygon
+
+
+  Int_t fNpoints = graph.GetN();
+  Double_t* fX = graph.GetX();
+  Double_t* fY = graph.GetY();
+
+   if (first < 0) first = 0;
+   if (last < 0) last = fNpoints-1;
+   if(last >= fNpoints) last = fNpoints-1;
+   if (first >= last) return 0;
+   Int_t np = last-first+1;
+   Double_t sum = 0.0;
+   for(Int_t i=first;i<=last;i++) {
+      Int_t j = first + (i-first+1)%np;
+      sum += TMath::Abs(fX[i]*fY[j]);
+      sum -= TMath::Abs(fY[i]*fX[j]);
+   }
+   return 0.5*sum;
+}

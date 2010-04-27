@@ -23,7 +23,7 @@
 
 
 #include <memory>
-
+#include "QCDFitUncertainty.h"
 
 //  _     _ _                          
 // | |   (_) |__  _ __ __ _ _ __ _   _ 
@@ -61,23 +61,61 @@ void FitDijetMass_Data() {
 
   
   TCanvas* c2 = new TCanvas("c2","DijetMass", 500, 500);
-  TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])*((x)^(-1*[2]))", 50., 700.);
+  TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])*((x)^(-1*[2]))", 100., 1000.);
+  func->SetParameter(0, 1.0e+08);
+  func->SetParameter(1, 5.23);
+  func->SetParameter(2, 4.13);
+  func->SetParameter(3, 1.0);
+
+
+//   TF1 *func = new TF1("func", "[0]*(1-x/7000.)*(x^[1])", 100., 1000.);
+//   func->SetParameter(0, 1000.);
+//   func->SetParameter(1, 5.0);
+
   func->SetLineColor(4);
   func->SetLineWidth(3);
-  func->SetParameter(0,1.88e+8);
-  func->SetParameter(1,3.975);
-  func->SetParameter(2,5.302);
-  func->SetParameter(3,-1.51);
-  hCorMassDen->Fit("func","LLI","",50.0, 526.0); // QCD fit
+  TVirtualFitter::SetMaxIterations( 10000 );
+  TVirtualFitter *fitter;
+
+  int fitStatus = hCorMassDen->Fit("func","LLI","",130.0, 800.0); // QCD fit
+ 
+
+  TH1F *hFitUncertainty = hCorMassDen->Clone("hFitUncertainty");
+  hFitUncertainty->SetLineColor(5);
+  hFitUncertainty->SetFillColor(5);
+  hFitUncertainty->SetMarkerColor(5);
+
+  if (fitStatus == 0) {
+    fitter = TVirtualFitter::GetFitter();
+    double* m_elements = fitter->GetCovarianceMatrix();
+    TMatrixDSym* cov_matrix = new TMatrixDSym( func->GetNumberFreeParameters(),
+					       m_elements);
+    cov_matrix->Print();
+    double x, y, e;
+
+    for(int i=0;i<hFitUncertainty->GetNbinsX();i++)
+      {
+	x = hFitUncertainty->GetBinCenter(i+1);
+	y = func->Eval(x);
+	e = QCDFitUncertainty( func, *cov_matrix, x);
+	hFitUncertainty->SetBinContent(i+1,y);
+	hFitUncertainty->SetBinError(i+1,e);
+      }
+  }
+
   hCorMassDen->SetXTitle("Corrected Dijet Mass (GeV)");
   hCorMassDen->SetYTitle("Events/GeV");
   hCorMassDen->GetYaxis()->SetTitleOffset(1.5);
   hCorMassDen->SetMarkerStyle(20);
-  hCorMassDen->GetXaxis()->SetRangeUser(0.,600.);
+  hCorMassDen->GetXaxis()->SetRangeUser(120.,900.);
   hCorMassDen->Draw("ep");
+  hFitUncertainty->Draw("E3 same");
+  hCorMassDen->Draw("ep same");
   c2->SetLogy(1);
 
 
+
+  
 
   TH1F *hCorMass     = hCorMassDen->Clone("hCorMass");
 
@@ -92,7 +130,7 @@ void FitDijetMass_Data() {
 
   // Our observable is the invariant mass
   RooRealVar invMass("invMass", "Corrected dijet mass", 
-		     30., 600.0, "GeV");
+		     100., 1000.0, "GeV");
   RooDataHist data( "data", "", invMass, hCorMass);
 
    //////////////////////////////////////////////
@@ -101,7 +139,7 @@ void FitDijetMass_Data() {
 
 
    // make QCD model
-  RooRealVar p0("p0", "# events", 600.0, 0.0, 1000000000000000000000.);
+  RooRealVar p0("p0", "# events", 600.0, 0.0, 10000000000.);
   RooRealVar p1("p1","p1", 3.975, -10., 10.) ;  
   RooRealVar p2("p2","p2", 5.302, 4., 8.) ; 
   RooRealVar p3("p3","p3", -1.51, -100., 100.) ; 
@@ -130,7 +168,7 @@ void FitDijetMass_Data() {
   // than taking point at center of bin
 
    RooFitResult* fit = model.fitTo(data, Minos(kFALSE), Extended(kTRUE),
-				   SumW2Error(kFALSE),Save(kTRUE), Range(54.,526.),
+				   SumW2Error(kFALSE),Save(kTRUE), Range(130.,800.),
 				   Integrate(kTRUE) );
 
    // to perform chi^2 minimization fit instead
@@ -183,7 +221,11 @@ void FitDijetMass_Data() {
    cResidual->Divide(2) ;
    cResidual->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1->GetYaxis()->SetTitleOffset(1.6) ; frame2->Draw() ;
    cResidual->cd(2) ; gPad->SetLeftMargin(0.15) ; frame1->GetYaxis()->SetTitleOffset(1.6) ; frame3->Draw() ;
-
+  
 }
+
+
+
+
 
 
