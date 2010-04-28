@@ -49,6 +49,12 @@ void FitDijetMass_Data() {
   
   TFile *inf  = new TFile("MassResults_ak7calo.root");
   TH1F *hCorMassDen     = (TH1F*) inf->Get("DiJetMass");
+  hCorMassDen->SetXTitle("Corrected Dijet Mass (GeV)");
+  hCorMassDen->SetYTitle("Events/GeV");
+  hCorMassDen->GetYaxis()->SetTitleOffset(1.5);
+  hCorMassDen->SetMarkerStyle(20);
+  hCorMassDen->GetXaxis()->SetRangeUser(120.,900.);
+
 
 
   gROOT->ProcessLine(".L tdrstyle.C");
@@ -61,28 +67,23 @@ void FitDijetMass_Data() {
 
   
   TCanvas* c2 = new TCanvas("c2","DijetMass", 500, 500);
-//   TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])*((x)^(-1*[2]))", 100., 1000.);
-//   func->SetParameter(0, 1.0e+08);
-//   func->SetParameter(1, 5.23);
-//   func->SetParameter(2, 4.13);
-//   func->SetParameter(3, 1.0);
-
-
-  TF1 *func = new TF1("func", "[0]*(1-x/7000.)/(x^[1])", 100., 1000.);
-  func->SetParameter(0, 10000.);
-  func->SetParameter(1, 5.0);
-
-  //func->SetParLimits(0,1.0e-03,1.0e+12);
-
+  /////// perform 4 parameters fit
+  TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])/(x^[2])", 
+  100., 1000.);
+  func->SetParameter(0, 1.0e+08);
+  func->SetParameter(1, -1.23);
+  func->SetParameter(2, 4.13);
+  func->SetParameter(3, 1.0);
 
   func->SetLineColor(4);
   func->SetLineWidth(3);
+
   TVirtualFitter::SetMaxIterations( 10000 );
   TVirtualFitter *fitter;
+  TMatrixDSym* cov_matrix;
 
   int fitStatus = hCorMassDen->Fit("func","LLI","",130.0, 800.0); // QCD fit
  
-
   TH1F *hFitUncertainty = hCorMassDen->Clone("hFitUncertainty");
   hFitUncertainty->SetLineColor(5);
   hFitUncertainty->SetFillColor(5);
@@ -91,8 +92,7 @@ void FitDijetMass_Data() {
   if (fitStatus == 0) {
     fitter = TVirtualFitter::GetFitter();
     double* m_elements = fitter->GetCovarianceMatrix();
-    TMatrixDSym* cov_matrix = new TMatrixDSym( func->GetNumberFreeParameters(),
-					       m_elements);
+    cov_matrix = new TMatrixDSym( func->GetNumberFreeParameters(),m_elements);
     cov_matrix->Print();
     double x, y, e;
 
@@ -106,14 +106,52 @@ void FitDijetMass_Data() {
       }
   }
 
-  hCorMassDen->SetXTitle("Corrected Dijet Mass (GeV)");
-  hCorMassDen->SetYTitle("Events/GeV");
-  hCorMassDen->GetYaxis()->SetTitleOffset(1.5);
-  hCorMassDen->SetMarkerStyle(20);
-  hCorMassDen->GetXaxis()->SetRangeUser(120.,900.);
   hCorMassDen->Draw("ep");
+  gPad->Update();
+  TPaveStats *st = (TPaveStats*)hCorMassDen->FindObject("stats");
+  st->SetName("stats1");
+  st->SetX1NDC(0.3); //new x start position
+  st->SetX2NDC(0.6); //new x end position
+  st->SetTextColor(4);
+  hCorMassDen->GetListOfFunctions()->Add(st);
+
+
+
+  /////// perform 2 parameters fit
+  TF1 *func2 = new TF1("func2", "[0]*(1-x/7000.)/(x^[1])", 100., 1000.);
+  func2->SetParameter(0, 10000.);
+  func2->SetParameter(1, 5.0);
+  func2->SetLineWidth(3);
+
+  fitStatus = hCorMassDen->Fit("func2","LLI","",130.0, 800.0); // QCD fit
+
+  TH1F *hFitUncertainty2 = hCorMassDen->Clone("hFitUncertainty2");
+  hFitUncertainty2->SetLineColor(kGray);
+  hFitUncertainty2->SetFillColor(kGray);
+  hFitUncertainty2->SetMarkerColor(kGray);
+
+  if (fitStatus == 0) {
+    fitter = TVirtualFitter::GetFitter();
+    double* m_elements = fitter->GetCovarianceMatrix();
+    cov_matrix = new TMatrixDSym( func2->GetNumberFreeParameters(),m_elements);
+    cov_matrix->Print();
+    double x, y, e;
+
+    for(int i=0;i<hFitUncertainty2->GetNbinsX();i++)
+      {
+	x = hFitUncertainty2->GetBinCenter(i+1);
+	y = func2->Eval(x);
+	e = QCDFitUncertainty( func2, *cov_matrix, x);
+	hFitUncertainty2->SetBinContent(i+1,y);
+	hFitUncertainty2->SetBinError(i+1,e);
+      }
+  }
+
   hFitUncertainty->Draw("E3 same");
-  hCorMassDen->Draw("ep same");
+  hCorMassDen->Draw("ep sames");
+  hFitUncertainty2->Draw("E3 same");
+  hCorMassDen->Draw("ep sames");
+  func2->Draw("same");
   c2->SetLogy(1);
 
 
