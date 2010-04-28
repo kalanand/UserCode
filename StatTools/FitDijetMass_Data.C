@@ -61,16 +61,19 @@ void FitDijetMass_Data() {
 
   
   TCanvas* c2 = new TCanvas("c2","DijetMass", 500, 500);
-  TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])*((x)^(-1*[2]))", 100., 1000.);
-  func->SetParameter(0, 1.0e+08);
-  func->SetParameter(1, 5.23);
-  func->SetParameter(2, 4.13);
-  func->SetParameter(3, 1.0);
+//   TF1 *func = new TF1("func", "[0]*((1-x/7000.+[3]*(x/7000)^2)^[1])*((x)^(-1*[2]))", 100., 1000.);
+//   func->SetParameter(0, 1.0e+08);
+//   func->SetParameter(1, 5.23);
+//   func->SetParameter(2, 4.13);
+//   func->SetParameter(3, 1.0);
 
 
-//   TF1 *func = new TF1("func", "[0]*(1-x/7000.)*(x^[1])", 100., 1000.);
-//   func->SetParameter(0, 1000.);
-//   func->SetParameter(1, 5.0);
+  TF1 *func = new TF1("func", "[0]*(1-x/7000.)/(x^[1])", 100., 1000.);
+  func->SetParameter(0, 10000.);
+  func->SetParameter(1, 5.0);
+
+  //func->SetParLimits(0,1.0e-03,1.0e+12);
+
 
   func->SetLineColor(4);
   func->SetLineWidth(3);
@@ -115,6 +118,7 @@ void FitDijetMass_Data() {
 
 
 
+/*
   
 
   TH1F *hCorMass     = hCorMassDen->Clone("hCorMass");
@@ -222,6 +226,7 @@ void FitDijetMass_Data() {
    cResidual->cd(1) ; gPad->SetLeftMargin(0.15) ; frame1->GetYaxis()->SetTitleOffset(1.6) ; frame2->Draw() ;
    cResidual->cd(2) ; gPad->SetLeftMargin(0.15) ; frame1->GetYaxis()->SetTitleOffset(1.6) ; frame3->Draw() ;
   
+*/
 }
 
 
