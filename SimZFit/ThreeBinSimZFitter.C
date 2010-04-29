@@ -131,60 +131,98 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
   cout << "Made bkg pdf" << endl;
 
 
-  // Now define some efficiency/yield variables  
-  RooRealVar efficiency_BB("efficiency_BB","efficiency_BB", 0.9, 0.0, 1.0);
-  RooRealVar efficiency_EB("efficiency_EB","efficiency_EB", 0.9, 0.0, 1.0);
-  RooRealVar efficiency_EE("efficiency_EE","efficiency_EE", 0.9, 0.0, 1.0);
+
+  // Now supply integrated luminosity in inverse picobarn
+  // -->  we get this number from the CMS lumi group
+  // https://twiki.cern.ch/twiki/bin/view/CMS/LumiWiki2010Data
+
+  RooRealVar lumi("lumi","lumi", 100.0);
 
 
-  RooRealVar numSignal_BB("numSignal_BB","numSignal_BB", 4000.0, -10.0, 1000000000.0);
-  RooRealVar numSignal_EB("numSignal_EB","numSignal_EB", 4000.0, -10.0, 1000000000.0);
-  RooRealVar numSignal_EE("numSignal_EE","numSignal_EE", 4000.0, -10.0, 1000000000.0);
+  // Now define Z production cross section variable (in pb) 
+  RooRealVar xsec("xsec","xsec", 800., 100.0, 4000.0);
 
 
-  RooRealVar numBkgPass_BB("numBkgPass_BB","numBkgPass_BB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgPass_EB("numBkgPass_EB","numBkgPass_EB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgPass_EE("numBkgPass_EE","numBkgPass_EE", 1000.0, -10.0, 1000000000.0);
+  // Define efficiency variables  
+  RooRealVar Eoff_B("Eoff_B","Eoff_B", 0.9, 0.5, 1.0);
+  RooRealVar Eoff_E("Eoff_E","Eoff_E", 0.9, 0.5, 1.0);
+  RooRealVar Etrig_B("Etrig_B","Etrig_B", 0.9, 0.8, 1.0);
+  RooRealVar Etrig_E("Etrig_E","Etrig_E", 0.9, 0.8, 1.0);
 
 
-  RooRealVar numBkgFail_BB("numBkgFail_BB","numBkgFail_BB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgFail_EB("numBkgFail_EB","numBkgFail_EB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgFail_EE("numBkgFail_EE","numBkgFail_EE", 1000.0, -10.0, 1000000000.0);
 
-  // RooArgList components(*signalShapePdf_,*bkgShapePdf_);
-
-   RooFormulaVar numSigPass_BB("numSigPass_BB","numSignal_BB*efficiency_BB",
-			       RooArgList(numSignal_BB,efficiency_BB));
-   RooFormulaVar numSigPass_EB("numSigPass_EB","numSignal_EB*efficiency_EB",
-			       RooArgList(numSignal_EB,efficiency_EB));
-   RooFormulaVar numSigPass_EE("numSigPass_EE","numSignal_EE*efficiency_EE",
-			       RooArgList(numSignal_EE,efficiency_EE));
+  // Now define acceptance variables --> we get these numbers from MC   
+  RooRealVar acc_BB("acc_BB","acc_BB", 0.2180);
+  RooRealVar acc_EB("acc_EB","acc_EB", 0.1657);
+  RooRealVar acc_EE("acc_EE","acc_EE", 0.0503);
 
 
-   RooFormulaVar numSigFail_BB("numSigFail_BB","numSignal_BB*(1.0-efficiency_BB)",
-			       RooArgList(numSignal_BB,efficiency_BB) );
-   RooFormulaVar numSigFail_EB("numSigFail_EB","numSignal_EB*(1.0-efficiency_EB)",
-			       RooArgList(numSignal_EB,efficiency_EB) );
-   RooFormulaVar numSigFail_EE("numSigFail_EE","numSignal_EE*(1.0-efficiency_EE)",
-			       RooArgList(numSignal_EE,efficiency_EE) );
 
+  // Define background yield variables: they are not related to each other  
+  RooRealVar nBkgPass_BB("nBkgPass_BB","nBkgPass_BB", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgPass_EB("nBkgPass_EB","nBkgPass_EB", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgPass_EE("nBkgPass_EE","nBkgPass_EE", 1000.0, -10.0, 1000000000.0);
+
+  RooRealVar nBkgFail_BB("nBkgFail_BB","nBkgFail_BB", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgFail_EB("nBkgFail_EB","nBkgFail_EB", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgFail_EE("nBkgFail_EE","nBkgFail_EE", 1000.0, -10.0, 1000000000.0);
+
+
+  /////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////
+ //  Define signal yield variables.  
+  // They are linked together by the total cross section:  e.g. Nbb = sigma*L*Abb*eff_BB
+
+  char* formula;
+  RooArgList* args;
+  formula = "lumi*xsec*acc_BB*Eoff_B*Eoff_B*(2.0*Etrig_B-Etrig_B*Etrig_B)";
+  args = new RooArgList(lumi,xsec,acc_BB,Eoff_B,Etrig_B);
+  RooFormulaVar nSigPass_BB("nSigPass_BB", formula, *args);
+  delete args;
+
+  formula = "lumi*xsec*acc_EB*Eoff_B*Eoff_E*(Etrig_B+Etrig_E-Etrig_B*Etrig_E)";
+  args = new RooArgList(lumi,xsec,acc_EB,Eoff_B,Eoff_E,Etrig_B,Etrig_E);
+  RooFormulaVar nSigPass_EB("nSigPass_EB",formula, *args);
+  delete args;
+
+  formula = "lumi*xsec*acc_EE*Eoff_E*Eoff_E*(2.0*Etrig_E-Etrig_E*Etrig_E)";
+  args = new RooArgList(lumi,xsec,acc_EE,Eoff_E,Etrig_E);
+  RooFormulaVar nSigPass_EE("nSigPass_EE",formula, *args);
+  delete args;
+
+  formula = "lumi*xsec*acc_BB*(1.0-Eoff_B*Eoff_B*(2.0*Etrig_B-Etrig_B*Etrig_B))";
+  args = new RooArgList(lumi,xsec,acc_BB,Eoff_B,Etrig_B);
+  RooFormulaVar nSigFail_BB("nSigFail_BB",formula, *args);
+  delete args;
+
+  formula = "lumi*xsec*acc_EB*(1.0-Eoff_B*Eoff_E*(Etrig_B+Etrig_E-Etrig_B*Etrig_E))";
+  args = new RooArgList(lumi,xsec,acc_EB,Eoff_B,Eoff_E,Etrig_B,Etrig_E);
+  RooFormulaVar nSigFail_EB("nSigFail_EB",formula, *args);
+  delete args;
+
+  formula = "lumi*xsec*acc_EE*(1.0-Eoff_E*Eoff_E*(2.0*Etrig_E-Etrig_E*Etrig_E))";
+  args = new RooArgList(lumi,xsec,acc_EE,Eoff_E,Etrig_E);
+  RooFormulaVar nSigFail_EE("nSigFail_EE",formula, *args);
+  delete args;
+  /////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////
 
    RooArgList componentspass_BB(*signalShapePdf_, *bkgShapePdf_);
    RooArgList componentspass_EB(*signalShapePdf_, *bkgShapePdf_);
    RooArgList componentspass_EE(*signalShapePdf_, *bkgShapePdf_);
 
-   RooArgList yieldspass_BB(numSigPass_BB, numBkgPass_BB);
-   RooArgList yieldspass_EB(numSigPass_EB, numBkgPass_EB);
-   RooArgList yieldspass_EE(numSigPass_EE, numBkgPass_EE);
+   RooArgList yieldspass_BB(nSigPass_BB, nBkgPass_BB);
+   RooArgList yieldspass_EB(nSigPass_EB, nBkgPass_EB);
+   RooArgList yieldspass_EE(nSigPass_EE, nBkgPass_EE);
 
 
    RooArgList componentsfail_BB(*signalShapeFailPdf_,*bkgShapeFailPdf_);
    RooArgList componentsfail_EB(*signalShapeFailPdf_,*bkgShapeFailPdf_);
    RooArgList componentsfail_EE(*signalShapeFailPdf_,*bkgShapeFailPdf_);
 
-   RooArgList yieldsfail_BB( numSigFail_BB, numBkgFail_BB );	  
-   RooArgList yieldsfail_EB(numSigFail_EB, numBkgFail_EB);	  
-   RooArgList yieldsfail_EE(numSigFail_EE, numBkgFail_EE);
+   RooArgList yieldsfail_BB( nSigFail_BB, nBkgFail_BB );	  
+   RooArgList yieldsfail_EB(nSigFail_EB, nBkgFail_EB);	  
+   RooArgList yieldsfail_EE(nSigFail_EE, nBkgFail_EE);
 
 
    RooAddPdf sumpass_BB("sumpass_BB","fixed extended sum pdf",
@@ -216,7 +254,9 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
 
   // ********* Do the Actual Fit ********** //  
-  RooFitResult *fitResult = totalPdf.fitTo(*data, Save(true), Extended(true));
+   RooFitResult *fitResult = totalPdf.fitTo(*data, Save(true), 
+					    Extended(true), PrintEvalErrors(-1), 
+					    Warnings(false));
   fitResult->Print("v");
 
 
@@ -357,13 +397,9 @@ void makeSignalPdf()
 
 
   rooCBMean_  = new RooRealVar("cbMean","cbMean", 90., 80., 100.);
-  rooCBSigma_ = new RooRealVar("cbSigma","cbSigma", 2., 0.1, 200.);
-  rooCBAlpha_ = new RooRealVar("cbAlpha","cbAlpha", 0.1, 0.001, 200);
-  rooCBN_     = new RooRealVar("cbN","cbN", 1., 0., 2000.);
-
-  // CB shape for signal component of the failing probe PDF
-  signalShapeFailPdf_ = new RooCBShape("cbPdf","cbPdf",*rooMass_,
-  *rooCBMean_, *rooCBSigma_,*rooCBAlpha_,*rooCBN_);
+  rooCBSigma_ = new RooRealVar("cbSigma","cbSigma", 10., 2., 20.);
+  signalShapeFailPdf_ = new RooGaussian("signalShapeFailPdf", "signalShapeFailPdf", 
+					  *rooMass_, *rooCBMean_, *rooCBSigma_);
   
  // signalShapeFailPdf_  = rooCBPdf_;
 }
