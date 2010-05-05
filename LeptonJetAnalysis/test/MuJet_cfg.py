@@ -11,13 +11,13 @@ process.load('Configuration.StandardSequences.MagneticField_38T_cff')
 
 process.seed = cms.EDFilter("MuonSelector",
     src = cms.InputTag("muons"),                               
-    cut = cms.string('pt > 10 && abs(eta)<2.4')
+    cut = cms.string('isTrackerMuon && pt > 10 && abs(eta)<2.4')
 )
 
 
 process.mymuons = cms.EDFilter("MuonSelector",
     src = cms.InputTag("muons"),                               
-    cut = cms.string('pt > 1 && abs(eta)<2.4')
+    cut = cms.string('isTrackerMuon && pt > 1 && abs(eta)<2.4')
 )
 
 

@@ -1,13 +1,14 @@
 /*****************************************************************************
  * Project: CMS detector at the CERN
  *
- * Package: ElectroWeakAnalysis/VPlusJets
+ * class: LeptonJetAnalysis/MuJet
  *
  *
  * Authors:
  *
  *   Kalanand Mishra, Fermilab - kalanand@fnal.gov
- *
+ *   Valerie Halyo, Princeton  - valerieh@princeton.edu
+ * 
  * Description:
  *   Search for leptojet in muon channel: 
  *          fill interesting variables into a specified TTree
@@ -17,6 +18,7 @@
  *
  * Copyright (C) 2010 FNAL 
  *****************************************************************************/
+
 
 #ifndef MuJet_h
 #define MuJet_h
