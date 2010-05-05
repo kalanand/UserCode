@@ -55,7 +55,7 @@ namespace ewk {
     void SetBranch( float* x, std::string name );
     void SetBranch( int* x, std::string name );
     void SetBranch( bool* x, std::string name );
-
+    double ComputeJetSize(int* nCount);
     TTree* tree_;
     edm::InputTag mInputSeedMuon;
     edm::InputTag mInputTrackMuons;
@@ -79,7 +79,10 @@ namespace ewk {
     float mujetTheta;
     int mujetCharge;
     int mujetNmuonsIn01;
+    int mujetNmuonsIn02;
     int mujetNmuonsIn03;
+    float mujetSize;
+    int mujetNumberOfMuons;
 
     /// muon type - type of the algorithm that reconstructed this muon
     /// multiple algorithms can reconstruct the same muon
@@ -109,9 +112,13 @@ namespace ewk {
     float seedVy;
     float seedVz;
     float seedY;
-    float seed_trackiso;
-    float seed_hcaliso;
-    float seed_ecaliso;
+    float seed_trackiso03;
+    float seed_hcaliso03;
+    float seed_ecaliso03;
+    float seed_trackiso05;
+    float seed_hcaliso05;
+    float seed_ecaliso05;
+
 
     ///////////////////
     float mupx[nMuMax];
@@ -127,9 +134,13 @@ namespace ewk {
     float muVy[nMuMax];
     float muVz[nMuMax];
     float muY[nMuMax];
-    float mu_trackiso[nMuMax];
-    float mu_hcaliso[nMuMax];
-    float mu_ecaliso[nMuMax];
+    float mu_trackiso03[nMuMax];
+    float mu_hcaliso03[nMuMax];
+    float mu_ecaliso03[nMuMax];
+    float mu_trackiso05[nMuMax];
+    float mu_hcaliso05[nMuMax];
+    float mu_ecaliso05[nMuMax];
+
     float muDR[nMuMax];
   };
 

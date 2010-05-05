@@ -1,13 +1,14 @@
 /*****************************************************************************
  * Project: CMS detector at the CERN
  *
- * Package: ElectroWeakAnalysis/VPlusJets
+ * class: LeptonJetAnalysis/MuJet
  *
  *
  * Authors:
  *
  *   Kalanand Mishra, Fermilab - kalanand@fnal.gov
- *
+ *   Valerie Halyo, Princeton  - valerieh@princeton.edu
+ * 
  * Description:
  *   Search for leptojet in muon channel: 
  *          fill interesting variables into a specified TTree
@@ -24,7 +25,7 @@
 #include "TLorentzVector.h"
 
 // Header file
-#include "ElectroWeakAnalysis/LeptonJetAnalysis/interface/MuJet.h"
+#include "ElectroWeakAnalysis/VPlusJets/interface/MuJet.h"
 #include "DataFormats/Math/interface/deltaR.h" // reco::deltaR
 
 ewk::MuJet::MuJet(const edm::ParameterSet iConfig)
@@ -90,8 +91,10 @@ void ewk::MuJet::SetBranches()
   SetBranch( &mujetTheta    , "mujet_Theta");
   SetBranch( &mujetCharge   , "mujet_Charge");
   SetBranch( &mujetNmuonsIn01, "mujet_numMuonsInDR01");
+  SetBranch( &mujetNmuonsIn01, "mujet_numMuonsInDR02");
   SetBranch( &mujetNmuonsIn03, "mujet_numMuonsInDR03");
-
+  SetBranch( &mujetSize,        "mujetSize");
+  SetBranch( &mujetNumberOfMuons, "mujetNumberOfMuons");
 
   ///////////////////////////////////////////////
   SetBranch( &seedpx,             seedLabel+"_px" );
@@ -108,9 +111,12 @@ void ewk::MuJet::SetBranches()
   SetBranch( &seedVy,             seedLabel+"_vy" );
   SetBranch( &seedVz,             seedLabel+"_vz" );
   SetBranch( &seedY,              seedLabel+"_y" );
-  SetBranch( &seed_trackiso,      seedLabel+"_trackiso" );
-  SetBranch( &seed_hcaliso,       seedLabel+"_hcaliso" );
-  SetBranch( &seed_ecaliso,       seedLabel+"_ecaliso" );
+  SetBranch( &seed_trackiso03,      seedLabel+"_trackiso03" );
+  SetBranch( &seed_hcaliso03,       seedLabel+"_hcaliso03" );
+  SetBranch( &seed_ecaliso03,       seedLabel+"_ecaliso03" );
+  SetBranch( &seed_trackiso05,      seedLabel+"_trackiso05" );
+  SetBranch( &seed_hcaliso05,       seedLabel+"_hcaliso05" );
+  SetBranch( &seed_ecaliso05,       seedLabel+"_ecaliso05" );
   SetBranch( &seedType, seedLabel+"_type" );
   SetBranch( &seed_numberOfChambers, seedLabel+"_numberOfChambers" );
   SetBranch( &seed_numberOfMatches,  seedLabel+"_numberOfMatches" );	  
@@ -130,9 +136,12 @@ void ewk::MuJet::SetBranches()
   SetBranch( &(muVy[0]),             lept+"_vy" );
   SetBranch( &(muVz[0]),             lept+"_vz" );
   SetBranch( &(muY[0]),              lept+"_y" );
-  SetBranch( &(mu_trackiso[0]),      lept+"_trackiso" );
-  SetBranch( &(mu_hcaliso[0]),       lept+"_hcaliso" );
-  SetBranch( &(mu_ecaliso[0]),       lept+"_ecaliso");
+  SetBranch( &(mu_trackiso03[0]),      lept+"_trackiso03" );
+  SetBranch( &(mu_hcaliso03[0]),       lept+"_hcaliso03" );
+  SetBranch( &(mu_ecaliso03[0]),       lept+"_ecaliso03");
+  SetBranch( &(mu_trackiso05[0]),      lept+"_trackiso05" );
+  SetBranch( &(mu_hcaliso05[0]),       lept+"_hcaliso05" );
+  SetBranch( &(mu_ecaliso05[0]),       lept+"_ecaliso05");
   SetBranch( &(muType[0]), lept+"_type" );
   SetBranch( &(mu_numberOfChambers[0]), lept+"_numberOfChambers" );
   SetBranch( &(mu_numberOfMatches[0]),  lept+"_numberOfMatches" );
@@ -162,7 +171,10 @@ void ewk::MuJet::init()
   mujetTheta    = -99999.;
   mujetCharge   = -10;
   mujetNmuonsIn01 = 0;
+  mujetNmuonsIn02 = 0;
   mujetNmuonsIn03 = 0;
+  mujetSize = 0.0;
+  mujetNumberOfMuons = 0;
 
   seedType   = -1; 
   seedCharge           = -10;
@@ -181,9 +193,13 @@ void ewk::MuJet::init()
   seedY                = -10.;
   seed_numberOfChambers   = -10.;
   seed_numberOfMatches    = -1.;
-  seed_trackiso     = 500.0;
-  seed_hcaliso      = 500.0;
-  seed_ecaliso      = 500.0;
+  seed_trackiso03     = 500.0;
+  seed_hcaliso03      = 500.0;
+  seed_ecaliso03      = 500.0;
+  seed_trackiso05     = 500.0;
+  seed_hcaliso05      = 500.0;
+  seed_ecaliso05      = 500.0;
+
 
   //////////////
   for(int i=0; i< nMuMax; ++i) {
@@ -204,9 +220,12 @@ void ewk::MuJet::init()
     muY[i]               = -10.;
     mu_numberOfChambers[i]   = -10.;
     mu_numberOfMatches[i]    = -1.;
-    mu_trackiso[i]    = 500.0;
-    mu_hcaliso[i]     = 500.0;
-    mu_ecaliso[i]     = 500.0;
+    mu_trackiso03[i]    = 500.0;
+    mu_hcaliso03[i]     = 500.0;
+    mu_ecaliso03[i]     = 500.0;
+    mu_trackiso05[i]    = 500.0;
+    mu_hcaliso05[i]     = 500.0;
+    mu_ecaliso05[i]     = 500.0;
     muDR[i]     = 500.0;
   }
   // initialization done
@@ -243,26 +262,43 @@ void ewk::MuJet::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
   if( trackMuons->size()<1 ) return; // Nothing to fill
   
 
-  // Now count the number of muons in cone 0.1 and 0.33 
-  // around the seed. Also, require muon pt > 1 GeV.
-  // make sure not to count the seed itself: dr > 0.01 
+  // define occupancy array
+  int nCountDR[26];
+  for(int i=0; i<26; ++i) nCountDR[i] = 0.0;
+  // index 0: count up to dR = 0.1
+  // index 1: count up to dR = 0.11
+  // index 2: count up to dR = 0.12
+  // index 3: count up to dR = 0.13
+  // ....
+  // index 25: count up to dR = 0.35
 
-  int muCountDR01 =0;
-  int muCountDR03 =0;
+
+  double dRval = 0.0;
+
   for (edm::View<reco::Muon>::const_iterator mu = trackMuons->begin (); 
        mu != trackMuons->end (); ++mu) {
 
+    // ******** Require muon pt > 1 GeV.
     if( mu->pt() < 1.0 ) continue;
+    dRval = reco::deltaR( mu->eta(), mu->phi(), seed->eta(), seed->phi() );
 
-    double dRval = reco::deltaR((float)mu->eta(), (float)mu->phi(), 
-				seed->eta(), seed->phi());	
-    if ( dRval > 0.01 && dRval < 0.1) muCountDR01++;
-    if( muCountDR01>0 && dRval > 0.01 && dRval < 0.33 ) muCountDR03++;
+  // *******  Make sure not to count the seed itself: dR>0.005
+    if( dRval < 0.005 ) continue;
+
+    // Increment the appropriate occupancy elements 
+    for(int i=0; i<26; ++i) {
+      if( dRval < (0.1 + 0.01*i) ) nCountDR[i]++;
+    }
   }
 
-  if(muCountDR03<1) return; // no other muon found
+  if( nCountDR[0]==0 ) return; // ****** no muon found
 
 
+  // ******* Now apply our algorithm $$$$$$$$$$
+  double mujetSize = ComputeJetSize(nCountDR); 
+  mujetNmuonsIn01 = nCountDR[0];
+  mujetNmuonsIn02 = nCountDR[10];
+  mujetNmuonsIn03 = nCountDR[20];
 
   ////////// fill seed variables //////////////
 
@@ -272,9 +308,12 @@ void ewk::MuJet::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
     seedVz               = seed->vz();
     seedY                = seed->rapidity();
     /// isolation 
-    seed_trackiso       = seed->isolationR03().sumPt;
-    seed_ecaliso        = seed->isolationR03().emEt;
-    seed_hcaliso        = seed->isolationR03().hadEt;
+    seed_trackiso03       = seed->isolationR03().sumPt;
+    seed_ecaliso03        = seed->isolationR03().emEt;
+    seed_hcaliso03        = seed->isolationR03().hadEt;
+    seed_trackiso05       = seed->isolationR05().sumPt;
+    seed_ecaliso05        = seed->isolationR05().emEt;
+    seed_hcaliso05        = seed->isolationR05().hadEt;
 
     seedType  = seed->type();
     seed_numberOfChambers  = seed->numberOfChambers();      
@@ -290,67 +329,115 @@ void ewk::MuJet::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
     seedEt             = seed->et();	  
 
 
-  ////////// fill muon related quantities //////////////
+    ////////// fill muon related quantities //////////////
 
     // vector sum of momentum and charge
     TLorentzVector MujetP4( 0, 0, 0, 0);
     mujetCharge = 0.0;
 
-  int i =0;
-  for (edm::View<reco::Muon>::const_iterator mu = trackMuons->begin (); 
-       mu != trackMuons->end (); ++mu) {
-
-    double dRval = reco::deltaR((float)mu->eta(), (float)mu->phi(), 
-				seed->eta(), seed->phi());	
+    int i =0;
+    for (edm::View<reco::Muon>::const_iterator mu = trackMuons->begin (); 
+	 mu != trackMuons->end (); ++mu) {
+      
+      dRval = reco::deltaR((float)mu->eta(), (float)mu->phi(), 
+			   seed->eta(), seed->phi());	
+      
+      if( !( dRval>0.005 && dRval<mujetSize && i<nMuMax) ) continue;
+      
+      ++i;
+      muDR[i]              = dRval;
+      muCharge[i]          = mu->charge();
+      muVx[i]              = mu->vx();
+      muVy[i]              = mu->vy();
+      muVz[i]              = mu->vz();
+      muY[i]               = mu->rapidity();
+      /// isolation 
+      mu_trackiso03[i]       = mu->isolationR03().sumPt;
+      mu_ecaliso03[i]        = mu->isolationR03().emEt;
+      mu_hcaliso03[i]        = mu->isolationR03().hadEt;
     
-    if( !( dRval>0.01 && dRval<0.33 && i<nMuMax) ) continue;
+      mu_trackiso05[i]       = mu->isolationR05().sumPt;
+      mu_ecaliso05[i]        = mu->isolationR05().emEt;
+      mu_hcaliso05[i]        = mu->isolationR05().hadEt;
     
-    ++i;
-    muDR[i]              = dRval;
-    muCharge[i]          = mu->charge();
-    muVx[i]              = mu->vx();
-    muVy[i]              = mu->vy();
-    muVz[i]              = mu->vz();
-    muY[i]               = mu->rapidity();
-    /// isolation 
-    mu_trackiso[i]       = mu->isolationR03().sumPt;
-    mu_ecaliso[i]        = mu->isolationR03().emEt;
-    mu_hcaliso[i]        = mu->isolationR03().hadEt;
-    
-    muType[i]            = mu->type();
-    mu_numberOfChambers[i] = mu->numberOfChambers();
-    mu_numberOfMatches[i]  = mu->numberOfMatches();
-    muTheta[i]          = mu->theta();
-    muEta[i]            = mu->eta();    
-    muPhi[i]            = mu->phi();
-    muE[i]              = mu->energy();
-    mupx[i]             = mu->px();
-    mupy[i]             = mu->py();
-    mupz[i]             = mu->pz();
-    muPt[i]             = mu->pt();
-    muEt[i]             = mu->et();
+      muType[i]            = mu->type();
+      mu_numberOfChambers[i] = mu->numberOfChambers();
+      mu_numberOfMatches[i]  = mu->numberOfMatches();
+      muTheta[i]          = mu->theta();
+      muEta[i]            = mu->eta();    
+      muPhi[i]            = mu->phi();
+      muE[i]              = mu->energy();
+      mupx[i]             = mu->px();
+      mupy[i]             = mu->py();
+      mupz[i]             = mu->pz();
+      muPt[i]             = mu->pt();
+      muEt[i]             = mu->et();
 
-    MujetP4 += TLorentzVector( mu->px(), mu->py(), mu->pz(), mu->energy() ); 
-    mujetCharge += mu->charge();
-  }
+      MujetP4 += TLorentzVector( mu->px(), mu->py(), mu->pz(), mu->energy() ); 
+      mujetCharge += mu->charge();
+    }
 
-  mujetMass = MujetP4.M();
-  mujetPt   = MujetP4.Perp();
-  mujetP    = MujetP4.Mag();
 
-  mujetPx    = MujetP4.Px();
-  mujetPy    = MujetP4.Py();
-  mujetPz    = MujetP4.Pz();
+    mujetNumberOfMuons = i; 
 
-  mujetRapidity    = MujetP4.Rapidity();
-  mujetEta    = MujetP4.PseudoRapidity();
-  mujetPhi    = MujetP4.Phi();
-  mujetTheta    = MujetP4.Theta();
-  mujetNmuonsIn01 = muCountDR01;
-  mujetNmuonsIn03 = muCountDR03;
+    mujetMass = MujetP4.M();
+    mujetPt   = MujetP4.Perp();
+    mujetP    = MujetP4.Mag();
+
+    mujetPx    = MujetP4.Px();
+    mujetPy    = MujetP4.Py();
+    mujetPz    = MujetP4.Pz();
+
+    mujetRapidity    = MujetP4.Rapidity();
+    mujetEta    = MujetP4.PseudoRapidity();
+    mujetPhi    = MujetP4.Phi();
+    mujetTheta    = MujetP4.Theta();
+
 }
 
 
+
+
+////////////////// compute jet size given the occupancy array ///////////////////
+
+// Now count the number of muons in dR of cone 0.1 from the seed.  
+// -- if we do not find any muon then STOP => Nothing to do 
+// -- if we find a muon then increment the cone size by 0.01 and count again
+//   * found a new muon ? => increment dR in the steps of 0.01 and continue the iteration
+//   * didn't find new muon ? => search in dR=0.11, then in dR=0.12, and finally in dR=0.15
+//        => still no new muon ? => STOP and report "muon jet size" = 0.1
+//        => if found a new muon in either of the previous three steps, then 
+//           increment dR by 0.01 and repeat the above process. Report the jet size.
+// -- finally, stop at dR=0.33 in any case. [we want to go up to cone size 0.3 
+//                                            + 10% for resolution]   
+
+double ewk::MuJet::ComputeJetSize(int* nCount) {
+
+  double jetSize = 0.1;
+  double tempjetSize = 0.1;
+  unsigned int i =0;
+  unsigned int ilast =0;
+
+
+  while( i < (sizeof(nCount)/sizeof(nCount[0]) - 5) ) {
+
+    tempjetSize = 0.1 + 0.01*i;
+
+    if( nCount[i]==nCount[i+1] && nCount[i]==nCount[i+2] && 
+	nCount[i]==nCount[i+5] ) { 
+      if( nCount[i]>nCount[ilast] ) jetSize = tempjetSize;
+      ilast = i;
+      i += 5;       
+    }
+    else { 
+      ilast = i;
+      ++i; 
+    }
+  }
+
+  return jetSize;
+
+}
 
 
 
