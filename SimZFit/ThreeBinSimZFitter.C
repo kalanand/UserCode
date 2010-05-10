@@ -43,9 +43,18 @@ using namespace RooFit;
 RooRealVar *rooMass_;
 RooAbsPdf* zVoigtianPdf_;
 RooAbsPdf* zgammaintfPdf_;
-RooAbsPdf* signalShapePdf_;
-RooAbsPdf* signalShapeFailPdf_;
+
+RooAbsPdf* signalShapePdfBB_;
+RooAbsPdf* signalShapePdfEB_;
+RooAbsPdf* signalShapePdfEE_;
+
+RooAbsPdf* signalShapeFailPdfBB_;
+RooAbsPdf* signalShapeFailPdfEB_;
+RooAbsPdf* signalShapeFailPdfEE_;
+
+
 RooAbsPdf* bkgShapePdf_;
+
 
 // Private variables needed for ZLineShape
 RooRealVar*    rooZMean_;
@@ -66,6 +75,20 @@ RooRealVar *bkgGammaFail_;
 RooAbsPdf *bkgShapeFailPdf_;
 
 TCanvas *c;
+TFile* Zeelineshape_file;
+TH1D* th1_pass_BB;
+TH1D* th1_pass_EB;
+TH1D* th1_pass_EE;
+RooDataHist* rdh_pass_BB;
+RooDataHist* rdh_pass_EB;
+RooDataHist* rdh_pass_EE;
+
+TH1D* th1_fail_BB;
+TH1D* th1_fail_EB;
+TH1D* th1_fail_EE;
+RooDataHist* rdh_fail_BB;
+RooDataHist* rdh_fail_EB;
+RooDataHist* rdh_fail_EE;
 
 
 
@@ -135,7 +158,6 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
   // Now supply integrated luminosity in inverse picobarn
   // -->  we get this number from the CMS lumi group
   // https://twiki.cern.ch/twiki/bin/view/CMS/LumiWiki2010Data
-
   RooRealVar lumi("lumi","lumi", 100.0);
 
 
@@ -144,11 +166,8 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
 
   // Define efficiency variables  
-  RooRealVar Eoff_B("Eoff_B","Eoff_B", 0.9, 0.5, 1.0);
-  RooRealVar Eoff_E("Eoff_E","Eoff_E", 0.9, 0.5, 1.0);
-  RooRealVar Etrig_B("Etrig_B","Etrig_B", 0.9, 0.8, 1.0);
-  RooRealVar Etrig_E("Etrig_E","Etrig_E", 0.9, 0.8, 1.0);
-
+  RooRealVar eff_B("eff_B","eff_B", 0.9, 0.5, 1.0);
+  RooRealVar eff_E("eff_E","eff_E", 0.9, 0.5, 1.0);
 
 
   // Now define acceptance variables --> we get these numbers from MC   
@@ -175,50 +194,51 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
   char* formula;
   RooArgList* args;
-  formula = "lumi*xsec*acc_BB*Eoff_B*Eoff_B*(2.0*Etrig_B-Etrig_B*Etrig_B)";
-  args = new RooArgList(lumi,xsec,acc_BB,Eoff_B,Etrig_B);
+  formula = "lumi*xsec*acc_BB*eff_B*eff_B";
+  args = new RooArgList(lumi,xsec,acc_BB,eff_B);
   RooFormulaVar nSigPass_BB("nSigPass_BB", formula, *args);
   delete args;
 
-  formula = "lumi*xsec*acc_EB*Eoff_B*Eoff_E*(Etrig_B+Etrig_E-Etrig_B*Etrig_E)";
-  args = new RooArgList(lumi,xsec,acc_EB,Eoff_B,Eoff_E,Etrig_B,Etrig_E);
+  formula = "lumi*xsec*acc_EB*eff_B*eff_E";
+  args = new RooArgList(lumi,xsec,acc_EB,eff_B,eff_E);
   RooFormulaVar nSigPass_EB("nSigPass_EB",formula, *args);
   delete args;
 
-  formula = "lumi*xsec*acc_EE*Eoff_E*Eoff_E*(2.0*Etrig_E-Etrig_E*Etrig_E)";
-  args = new RooArgList(lumi,xsec,acc_EE,Eoff_E,Etrig_E);
+  formula = "lumi*xsec*acc_EE*eff_E*eff_E";
+  args = new RooArgList(lumi,xsec,acc_EE,eff_E);
   RooFormulaVar nSigPass_EE("nSigPass_EE",formula, *args);
   delete args;
 
-  formula = "lumi*xsec*acc_BB*(1.0-Eoff_B*Eoff_B*(2.0*Etrig_B-Etrig_B*Etrig_B))";
-  args = new RooArgList(lumi,xsec,acc_BB,Eoff_B,Etrig_B);
+
+  formula = "lumi*xsec*acc_BB*eff_B*(1.0-eff_B)";
+  args = new RooArgList(lumi,xsec,acc_BB,eff_B);
   RooFormulaVar nSigFail_BB("nSigFail_BB",formula, *args);
   delete args;
 
-  formula = "lumi*xsec*acc_EB*(1.0-Eoff_B*Eoff_E*(Etrig_B+Etrig_E-Etrig_B*Etrig_E))";
-  args = new RooArgList(lumi,xsec,acc_EB,Eoff_B,Eoff_E,Etrig_B,Etrig_E);
+  formula = "lumi*xsec*acc_EB*eff_B*(1.0-eff_E)";
+  args = new RooArgList(lumi,xsec,acc_EB,eff_B,eff_E);
   RooFormulaVar nSigFail_EB("nSigFail_EB",formula, *args);
   delete args;
 
-  formula = "lumi*xsec*acc_EE*(1.0-Eoff_E*Eoff_E*(2.0*Etrig_E-Etrig_E*Etrig_E))";
-  args = new RooArgList(lumi,xsec,acc_EE,Eoff_E,Etrig_E);
+  formula = "lumi*xsec*acc_EE*eff_E*(1.0-eff_E)";
+  args = new RooArgList(lumi,xsec,acc_EE,eff_E);
   RooFormulaVar nSigFail_EE("nSigFail_EE",formula, *args);
   delete args;
   /////////////////////////////////////////////////////////////////////////////////
   /////////////////////////////////////////////////////////////////////////////////
 
-   RooArgList componentspass_BB(*signalShapePdf_, *bkgShapePdf_);
-   RooArgList componentspass_EB(*signalShapePdf_, *bkgShapePdf_);
-   RooArgList componentspass_EE(*signalShapePdf_, *bkgShapePdf_);
+   RooArgList componentspass_BB(*signalShapePdfBB_, *bkgShapePdf_);
+   RooArgList componentspass_EB(*signalShapePdfEB_, *bkgShapePdf_);
+   RooArgList componentspass_EE(*signalShapePdfEE_, *bkgShapePdf_);
 
    RooArgList yieldspass_BB(nSigPass_BB, nBkgPass_BB);
    RooArgList yieldspass_EB(nSigPass_EB, nBkgPass_EB);
    RooArgList yieldspass_EE(nSigPass_EE, nBkgPass_EE);
 
 
-   RooArgList componentsfail_BB(*signalShapeFailPdf_,*bkgShapeFailPdf_);
-   RooArgList componentsfail_EB(*signalShapeFailPdf_,*bkgShapeFailPdf_);
-   RooArgList componentsfail_EE(*signalShapeFailPdf_,*bkgShapeFailPdf_);
+   RooArgList componentsfail_BB(*signalShapeFailPdfBB_,*bkgShapeFailPdf_);
+   RooArgList componentsfail_EB(*signalShapeFailPdfEB_,*bkgShapeFailPdf_);
+   RooArgList componentsfail_EE(*signalShapeFailPdfEE_,*bkgShapeFailPdf_);
 
    RooArgList yieldsfail_BB( nSigFail_BB, nBkgFail_BB );	  
    RooArgList yieldsfail_EB(nSigFail_EB, nBkgFail_EB);	  
@@ -368,40 +388,39 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
 
 
-// ***** Function to return the signal Pdf *** //
-void makeSignalPdf()
-{
+// // ***** Function to return the signal Pdf *** //
+ void makeSignalPdf() {
 
-  // Signal PDF variables
-  rooZMean_   = new RooRealVar("zMean","zMean", 91.1876, 88., 94.);
-  rooZWidth_  = new RooRealVar("zWidth","zWidth", 2.8, 0.0, 10.0);
-  rooZSigma_  = new RooRealVar("zSigma","zSigma", 2.8, 0.0, 10.0);
-  rooZJ_  = new RooRealVar("z_gam_intf","", 0.01, 0.0, 1.0);
+  // Tag+Tag selection pdf
+  Zeelineshape_file =  new TFile("Zlineshapes.root", "READ");
+  th1_pass_BB = (TH1D*) Zeelineshape_file->Get("pass_BB");
+  th1_pass_EB = (TH1D*) Zeelineshape_file->Get("pass_BE");
+  th1_pass_EE = (TH1D*) Zeelineshape_file->Get("pass_EE");
 
+  rdh_pass_BB = new RooDataHist("rdh_pass_BB","", *rooMass_, th1_pass_BB);
+  rdh_pass_EB = new RooDataHist("rdh_pass_EB","", *rooMass_, th1_pass_EB);
+  rdh_pass_EE = new RooDataHist("rdh_pass_EE","", *rooMass_, th1_pass_EE);
 
-  // Voigtian for signal component of the passing probe PDF
-  zVoigtianPdf_ = new RooVoigtian("zVoigtianPdf", "zVoigtianPdf", 
-				  *rooMass_, *rooZMean_, 
-				  *rooZWidth_, *rooZSigma_);
-
-  // Tord Riemann formula::::
-  // Z lineshape = [ (s/M_Z^2)*(1+J) - J] . BW, where J = Z--gamma int = 0.07 
-  
-
-  zgammaintfPdf_ = new RooGenericPdf("zgammaintfPdf_",
-				     "@0*@0*1.07/(91.1876*91.1876)-0.07",
-				     RooArgList(*rooMass_));
-  signalShapePdf_ = new RooProdPdf("signalShapePdf","signalShapePdf",
-				   *zVoigtianPdf_, *zgammaintfPdf_);
+  signalShapePdfBB_ = new RooHistPdf("signalShapePdfBB", "", RooArgSet(*rooMass_), *rdh_pass_BB);
+  signalShapePdfEB_ = new RooHistPdf("signalShapePdfEB", "", RooArgSet(*rooMass_), *rdh_pass_EB);
+  signalShapePdfEE_ = new RooHistPdf("signalShapePdfEE", "", RooArgSet(*rooMass_), *rdh_pass_EE);
 
 
 
-  rooCBMean_  = new RooRealVar("cbMean","cbMean", 90., 80., 100.);
-  rooCBSigma_ = new RooRealVar("cbSigma","cbSigma", 10., 2., 20.);
-  signalShapeFailPdf_ = new RooGaussian("signalShapeFailPdf", "signalShapeFailPdf", 
-					  *rooMass_, *rooCBMean_, *rooCBSigma_);
-  
- // signalShapeFailPdf_  = rooCBPdf_;
+  // Tag+Fail selection pdf
+  th1_fail_BB = (TH1D*) Zeelineshape_file->Get("fail_BB");
+  th1_fail_EB = (TH1D*) Zeelineshape_file->Get("fail_BE");
+  th1_fail_EE = (TH1D*) Zeelineshape_file->Get("fail_EE");
+
+  rdh_fail_BB = new RooDataHist("rdh_fail_BB","", *rooMass_, th1_fail_BB);
+  rdh_fail_EB = new RooDataHist("rdh_fail_EB","", *rooMass_, th1_fail_EB);
+  rdh_fail_EE = new RooDataHist("rdh_fail_EE","", *rooMass_, th1_fail_EE);
+
+
+  signalShapeFailPdfBB_ = new RooHistPdf("signalShapeFailPdfBB", "", RooArgSet(*rooMass_), *rdh_fail_BB);
+  signalShapeFailPdfEB_ = new RooHistPdf("signalShapeFailPdfEB", "", RooArgSet(*rooMass_), *rdh_fail_EB);
+  signalShapeFailPdfEE_ = new RooHistPdf("signalShapeFailPdfEE", "", RooArgSet(*rooMass_), *rdh_fail_EE);
+
 }
 
 

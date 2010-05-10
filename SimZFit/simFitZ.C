@@ -61,20 +61,29 @@ void simFitZ()
   TH1D* ZmassFail_EE = new TH1D("ZmassFail_EE", "", 40, 60, 120);
 
 
+  TCut passPlus =  "(ePlus_HoverE<0.05) && ((abs(ePlusEta)<1.4442" 
+    "&& ePlus_SigmaIetaIeta<0.01 && ePlus_DeltaEtaIn<0.0071)"
+    "|| (abs(ePlusEta)>1.56 && ePlus_SigmaIetaIeta<0.028 && ePlus_DeltaEtaIn<0.0066))";
 
-  TCut passCut =  "ePlus_HoverE<0.05 && eMinus_HoverE<0.05";
+  TCut passMinus =  "(eMinus_HoverE<0.05) && ((abs(eMinusEta)<1.4442" 
+    "&& eMinus_SigmaIetaIeta<0.01 && eMinus_DeltaEtaIn<0.0071)"
+    "|| (abs(eMinusEta)>1.56 && eMinus_SigmaIetaIeta<0.028 && eMinus_DeltaEtaIn<0.0066))";
+
+
   TCut bbCut =  "abs(ePlusEta)<1.4442 && abs(eMinusEta)<1.4442";
-  TCut ebCut = "(abs(ePlusEta)<1.4442 && abs(eMinusEta)>1.5660) || (abs(eMinusEta)<1.4442 && abs(ePlusEta)>1.5660)";
+  TCut ebCut = "(abs(ePlusEta)<1.4442 && abs(eMinusEta)>1.5660)"
+    "|| (abs(eMinusEta)<1.4442 && abs(ePlusEta)>1.5660)";
   TCut eeCut =  "abs(ePlusEta)>1.5660 && abs(eMinusEta)>1.5660";
+  //  TCut failCut =  "ePlus_HoverE>0.05";
 
 
-  t->Draw("mZee>>+ZmassPass_BB", passCut && bbCut, "goff");
-  t->Draw("mZee>>+ZmassPass_EB", passCut && ebCut, "goff");
-  t->Draw("mZee>>+ZmassPass_EE", passCut && eeCut, "goff");
+  t->Draw("mZee>>+ZmassPass_BB", passPlus && passMinus && bbCut, "goff");
+  t->Draw("mZee>>+ZmassPass_EB", passPlus && passMinus && ebCut, "goff");
+  t->Draw("mZee>>+ZmassPass_EE", passPlus && passMinus && eeCut, "goff");
 
-  t->Draw("mZee>>+ZmassFail_BB", !passCut && bbCut, "goff");
-  t->Draw("mZee>>+ZmassFail_EB", !passCut && ebCut, "goff");
-  t->Draw("mZee>>+ZmassFail_EE", !passCut && eeCut, "goff");
+  t->Draw("mZee>>+ZmassFail_BB", !passPlus && passMinus  && bbCut, "goff");
+  t->Draw("mZee>>+ZmassFail_EB", !passPlus && passMinus  && ebCut, "goff");
+  t->Draw("mZee>>+ZmassFail_EE", !passPlus && passMinus  && eeCut, "goff");
 
 
   ///////////////////////////////////////
