@@ -26,10 +26,10 @@
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
 
-//// The following three are the irreducible free parameters of the fit:
-////        Z cross section, efficiency_barrel, efficiency_endcap.
-////  Additionally, the following five nuisance parameters are floating:
-////        nBkgFail_BB,  nBkgFail_EB, nBkgFail_EE, bkgGamma, bkgGammaFail.
+//// Following are the 3 irreducible free parameters of the fit:
+////        Z cross section and single electron reco efficiency: eff_B, eff_E.
+////  Additionally, the following 4 nuisance parameters are floating:
+////        nBkgFail_BB,  nBkgFail_EB, nBkgFail_EE, bkgGammaFail.
 ////  If we have a lot more data, we can float three nBkgPass pars.
 
 
@@ -48,39 +48,20 @@ using namespace RooFit;
 
 // The signal & background Pdf 
 RooRealVar *rooMass_;
-RooAbsPdf* zVoigtianPdf_;
-RooAbsPdf* zgammaintfPdf_;
-
 RooAbsPdf* signalShapePdfBB_;
 RooAbsPdf* signalShapePdfEB_;
 RooAbsPdf* signalShapePdfEE_;
-
 RooAbsPdf* signalShapeFailPdfBB_;
 RooAbsPdf* signalShapeFailPdfEB_;
 RooAbsPdf* signalShapeFailPdfEE_;
-
-
 RooAbsPdf* bkgShapePdf_;
+RooAbsPdf *bkgShapeFailPdf_;
 
 
-// Private variables needed for ZLineShape
-RooRealVar*    rooZMean_;
-RooRealVar*    rooZWidth_;
-RooRealVar*    rooZSigma_;
-RooRealVar*    rooZJ;
-
-RooRealVar*    rooCBMean_ ;
-RooRealVar*    rooCBSigma_;
-RooRealVar*    rooCBAlpha_;
-RooRealVar*    rooCBN_;
-
-
-// Private variables needed for background shape
+// Private global variables needed to define PDFs
 RooRealVar *bkgGamma_;
 RooAbsPdf *rooCMSBkgPdf_;
 RooRealVar *bkgGammaFail_;
-RooAbsPdf *bkgShapeFailPdf_;
-
 TCanvas *c;
 TFile* Zeelineshape_file;
 TH1D* th1_pass_BB;
@@ -189,9 +170,9 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
   RooRealVar nBkgPass_EB("nBkgPass_EB","nBkgPass_EB", 0.0);
   RooRealVar nBkgPass_EE("nBkgPass_EE","nBkgPass_EE", 0.0);
 
-  RooRealVar nBkgFail_BB("nBkgFail_BB","nBkgFail_BB",100.,-10.,1000000000.);
-  RooRealVar nBkgFail_EB("nBkgFail_EB","nBkgFail_EB", 100.,-10.,1000000000.);
-  RooRealVar nBkgFail_EE("nBkgFail_EE","nBkgFail_EE", 100.,-10.,1000000000.);
+  RooRealVar nBkgFail_BB("nBkgFail_BB","nBkgFail_BB",100.,-10.,100000.);
+  RooRealVar nBkgFail_EB("nBkgFail_EB","nBkgFail_EB", 100.,-10.,10000.);
+  RooRealVar nBkgFail_EE("nBkgFail_EE","nBkgFail_EE", 100.,-10.,10000.);
 
 
   ////////////////////////////////////////////////////////////////////////////
@@ -443,7 +424,8 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 void makeBkgPdf()
 {  
   // Background PDF variables
-   bkgGamma_ = new RooRealVar("bkgGamma","bkgGamma", 0.5, -1000., 1000.);
+  // ************* Fix the background shape PDF to 0 for the TT component
+   bkgGamma_ = new RooRealVar("bkgGamma","bkgGamma", 0.0);
    bkgShapePdf_ =  new RooPolynomial("bkgShapePdf","bkgShapePdf", *rooMass_, *bkgGamma_);
 
 

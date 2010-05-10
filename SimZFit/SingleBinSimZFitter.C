@@ -16,15 +16,22 @@
  * Implementation details:
  *  Uses RooFit classes.
  *  User is supposed to provide two histograms corresponding to 
- *    "tag + probePass" and "tag+probeFail" invariant masses.
- *  Use different signal and background PDFs for the 'probePass' 
- *    and 'probeFail' cases.   
+ *    "tag + tag" and "tag + Fail SC" invariant masses.
+ *  Use different signal and background PDFs for the 'TT' and 'TF' cases. 
  *
  * History:
  *   
  *
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
+
+
+//// The following two are the irreducible free parameters of the fit:
+////        Z cross section and single electron reconstruction efficiency.
+////  Additionally, the following two nuisance parameters are floating:
+////        nBkgFail, bkgGammaFail.
+////  If we have a lot more data, we can float nBkgPass parameter.
+
 
 // ROOT
 #include <TROOT.h>
@@ -44,25 +51,19 @@ RooRealVar *rooMass_;
 RooAbsPdf* signalShapePdf_;
 RooAbsPdf* signalShapeFailPdf_;
 RooAbsPdf* bkgShapePdf_;
-
-// Private variables needed for ZLineShape
-RooRealVar*    rooZMean_;
-RooRealVar*    rooZWidth_;
-RooRealVar*    rooZSigma_;
-
-RooRealVar*    rooCBMean_ ;
-RooRealVar*    rooCBSigma_;
-RooRealVar*    rooCBAlpha_;
-RooRealVar*    rooCBN_;
+RooAbsPdf *bkgShapeFailPdf_;
 
 
-// Private variables needed for background shape
+// Private global variables needed to define PDFs
 RooRealVar *bkgGamma_;
 RooAbsPdf *rooCMSBkgPdf_;
 RooRealVar *bkgGammaFail_;
-RooAbsPdf *bkgShapeFailPdf_;
-
 TCanvas *c;
+TFile* Zeelineshape_file;
+TH1D* th1_pass;
+RooDataHist* rdh_pass;
+TH1D* th1_fail;
+RooDataHist* rdh_fail;
 
 
 
@@ -107,28 +108,56 @@ void SingleBinSimZFitter( TH1& hist1, TH1& hist2 )
   cout << "Made bkg pdf" << endl;
 
 
-  // Now define some efficiency/yield variables  
-  RooRealVar efficiency("efficiency","efficiency", 0.9, 0.0, 1.0);
-  RooRealVar numSignal("numSignal","numSignal", 4000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgPass("numBkgPass","numBkgPass", 1000.0, -10.0, 1000000000.0);
-  RooRealVar numBkgFail("numBkgFail","numBkgFail", 1000.0, -10.0, 1000000000.0);
-  RooArgList components(*signalShapePdf_,*bkgShapePdf_);
 
 
-   RooFormulaVar numSigPass("numSigPass","numSignal*efficiency", 
-   RooArgList(numSignal,efficiency) );
-   RooFormulaVar numSigFail("numSigFail","numSignal*(1.0 - efficiency)", 
-   RooArgList(numSignal,efficiency) );
+
+  // Now supply integrated luminosity in inverse picobarn
+  // -->  we get this number from the CMS lumi group
+  // https://twiki.cern.ch/twiki/bin/view/CMS/LumiWiki2010Data
+  RooRealVar lumi("lumi","lumi", 300.0);
+
+
+  // Now define Z production cross section variable (in pb) 
+  RooRealVar xsec("xsec","xsec", 800., 100.0, 4000.0);
+
+
+  // Define efficiency variable 
+  RooRealVar eff("eff","eff", 0.9, 0.5, 1.0);
+
+
+  // Now define acceptance variables --> we get these numbers from MC   
+  RooRealVar acc("acc","acc", 0.4340);
+
+
+  // Define background yield variables: they are not related to each other  
+  RooRealVar nBkgPass("nBkgPass","nBkgPass", 0.0);
+  RooRealVar nBkgFail("nBkgFail","nBkgFail",100.,-10.,1000000000.);
+
+
+
+  ////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////
+ //  Define signal yield variables.  
+  // They are linked together by the total cross section:  e.g. 
+  //          N = sigma*L*A*eff
+
+  RooFormulaVar nSigPass("nSigPass", "lumi*xsec*acc*eff*eff", 
+			 RooArgList(lumi,xsec,acc,eff) );
+
+  RooFormulaVar nSigFail("nSigFail","lumi*xsec*acc*eff*(1.0-eff)", 
+			 RooArgList(lumi,xsec,acc,eff) );
+
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
    RooArgList componentspass(*signalShapePdf_, *bkgShapePdf_);
-   RooArgList yieldspass(numSigPass, numBkgPass);
+   RooArgList yieldspass(nSigPass, nBkgPass);
    RooArgList componentsfail(*signalShapeFailPdf_,*bkgShapeFailPdf_);
-   RooArgList yieldsfail(numSigFail, numBkgFail);	  
+   RooArgList yieldsfail(nSigFail, nBkgFail);	  
 
-   RooAddPdf sumpass("sumpass","fixed extended sum pdf",
-   componentspass,yieldspass);
-   RooAddPdf sumfail("sumfail","fixed extended sum pdf",
-   componentsfail, yieldsfail);
+   RooAddPdf sumpass("sumpass","extended sum pdf",componentspass,yieldspass);
+   RooAddPdf sumfail("sumfail","extended sum pdf",componentsfail, yieldsfail);
+
 
    // The total simultaneous fit ...
    RooSimultaneous totalPdf("totalPdf","totalPdf", sample);
@@ -200,27 +229,34 @@ void SingleBinSimZFitter( TH1& hist1, TH1& hist2 )
 // ***** Function to return the signal Pdf *** //
 void makeSignalPdf()
 {
+  // Tag+Tag selection pdf
+  Zeelineshape_file =  new TFile("Zlineshapes.root", "READ");
+  TH1D* th1_pass_BB = (TH1D*) Zeelineshape_file->Get("pass_BB");
+  TH1D* th1_pass_EB = (TH1D*) Zeelineshape_file->Get("pass_BE");
+  TH1D* th1_pass_EE = (TH1D*) Zeelineshape_file->Get("pass_EE");
 
-  // Signal PDF variables
-  rooZMean_   = new RooRealVar("zMean","zMean", 91.1876, 87.5, 94.5);
-  rooZWidth_  = new RooRealVar("zWidth","zWidth", 2.8, 0.0, 10.0);
-  rooZSigma_  = new RooRealVar("zSigma","zSigma", 2.8, 0.0, 10.0);
+  th1_pass = (TH1D*) th1_pass_BB->Clone("th1_pass");
+  th1_pass->Add(th1_pass_EB);
+  th1_pass->Add(th1_pass_EE);
 
-  // Voigtian for signal component of the passing probe PDF
-  signalShapePdf_ = new RooVoigtian("signalShapePdf", "signalShapePdf", 
-				  *rooMass_, *rooZMean_, 
-				  *rooZWidth_, *rooZSigma_);
 
-  rooCBMean_  = new RooRealVar("cbMean","cbMean", 90., 80., 100.);
-  rooCBSigma_ = new RooRealVar("cbSigma","cbSigma", 2., 0.1, 20.);
-  rooCBAlpha_ = new RooRealVar("cbAlpha","cbAlpha", 0.1, 0.001, 50);
-  rooCBN_     = new RooRealVar("cbN","cbN", 1., 0., 200.);
+  rdh_pass = new RooDataHist("rdh_pass","", *rooMass_, th1_pass);
+  signalShapePdf_ = new RooHistPdf("signalShapePdf","",RooArgSet(*rooMass_),*rdh_pass);
 
-  // CB shape for signal component of the failing probe PDF
-  signalShapeFailPdf_ = new RooCBShape("cbPdf","cbPdf",*rooMass_,
-  *rooCBMean_, *rooCBSigma_,*rooCBAlpha_,*rooCBN_);
-  
- // signalShapeFailPdf_  = rooCBPdf_;
+
+
+  // Tag+Fail selection pdf
+  TH1D* th1_fail_BB = (TH1D*) Zeelineshape_file->Get("fail_BB");
+  TH1D* th1_fail_EB = (TH1D*) Zeelineshape_file->Get("fail_BE");
+  TH1D* th1_fail_EE = (TH1D*) Zeelineshape_file->Get("fail_EE");
+
+  th1_fail = (TH1D*) th1_fail_BB->Clone("th1_fail");
+  th1_fail->Add(th1_fail_EB);
+  th1_fail->Add(th1_fail_EE);
+
+  rdh_fail = new RooDataHist("rdh_fail","", *rooMass_, th1_fail);
+  signalShapeFailPdf_ = new RooHistPdf("signalShapeFailPdf", "", 
+				       RooArgSet(*rooMass_), *rdh_fail);
 }
 
 
@@ -234,13 +270,14 @@ void makeSignalPdf()
 void makeBkgPdf()
 {  
   // Background PDF variables
-   bkgGamma_ = new RooRealVar("bkgGamma","bkgGamma", 0.5, -10., 10.);
+  // ************* Fix the background shape PDF to 0 for the TT component
+   bkgGamma_ = new RooRealVar("bkgGamma","bkgGamma", 0.0);
    bkgShapePdf_ =  new RooPolynomial("bkgShapePdf","bkgShapePdf", 
                     *rooMass_, *bkgGamma_);
 
 
    bkgGammaFail_ = new RooRealVar("bkgGammaFail","bkgGammaFail",
-   0.5, -10., 10.);
+   0.5, -1000., 1000.);
    bkgShapeFailPdf_ = new RooPolynomial("bkgShapeFailPdf","bkgShapeFailPdf", 
                       *rooMass_, *bkgGammaFail_);
 }

@@ -21,8 +21,6 @@
  *
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
-
-
 //#include "SingleBinSimZFitter.C"
 #include "ThreeBinSimZFitter.C"
 
@@ -42,14 +40,27 @@ void simFitZ()
   TFile* f = new TFile(inputFileName);
   TTree* t = (TTree*) f->Get("ZJet");
 
-  /*
+
+  TCut passPlus =  "(ePlus_HoverE<0.05) && ((abs(ePlusEta)<1.4442" 
+    "&& ePlus_SigmaIetaIeta<0.01 && ePlus_DeltaEtaIn<0.0071)"
+    "|| (abs(ePlusEta)>1.56 && ePlus_SigmaIetaIeta<0.028 && ePlus_DeltaEtaIn<0.0066))";
+
+  TCut passMinus =  "(eMinus_HoverE<0.05) && ((abs(eMinusEta)<1.4442" 
+    "&& eMinus_SigmaIetaIeta<0.01 && eMinus_DeltaEtaIn<0.0071)"
+    "|| (abs(eMinusEta)>1.56 && eMinus_SigmaIetaIeta<0.028 && eMinus_DeltaEtaIn<0.0066))";
+
+
+  //////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
+
   TH1D* ZmassPass = new TH1D("ZmassPass", "", 40, 60, 120);
   TH1D* ZmassFail = new TH1D("ZmassFail", "", 40, 60, 120);
   TCut passCut =  "ePlus_HoverE<0.05 && eMinus_HoverE<0.05";
  
-  t->Draw("mZee>>+ZmassPass", passCut, "goff");
-  t->Draw("mZee>>+ZmassFail", !passCut, "goff");
-  */
+  t->Draw("mZee>>+ZmassPass", passPlus && passMinus, "goff");
+  t->Draw("mZee>>+ZmassFail", !passPlus && passMinus, "goff");
+  //////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
 
 
   TH1D* ZmassPass_BB = new TH1D("ZmassPass_BB", "", 40, 60, 120);
@@ -61,13 +72,6 @@ void simFitZ()
   TH1D* ZmassFail_EE = new TH1D("ZmassFail_EE", "", 40, 60, 120);
 
 
-  TCut passPlus =  "(ePlus_HoverE<0.05) && ((abs(ePlusEta)<1.4442" 
-    "&& ePlus_SigmaIetaIeta<0.01 && ePlus_DeltaEtaIn<0.0071)"
-    "|| (abs(ePlusEta)>1.56 && ePlus_SigmaIetaIeta<0.028 && ePlus_DeltaEtaIn<0.0066))";
-
-  TCut passMinus =  "(eMinus_HoverE<0.05) && ((abs(eMinusEta)<1.4442" 
-    "&& eMinus_SigmaIetaIeta<0.01 && eMinus_DeltaEtaIn<0.0071)"
-    "|| (abs(eMinusEta)>1.56 && eMinus_SigmaIetaIeta<0.028 && eMinus_DeltaEtaIn<0.0066))";
 
 
   TCut bbCut =  "abs(ePlusEta)<1.4442 && abs(eMinusEta)<1.4442";
@@ -88,7 +92,7 @@ void simFitZ()
 
   ///////////////////////////////////////
   /////////////////////////////////////
+  // SingleBinSimZFitter(*ZmassPass, *ZmassFail);
 
-  //SingleBinSimZFitter(*ZmassPass, *ZmassFail);
   ThreeBinSimZFitter(*ZmassPass_BB, *ZmassFail_BB, *ZmassPass_EB, *ZmassFail_EB, *ZmassPass_EE, *ZmassFail_EE);
 }
