@@ -15,16 +15,23 @@
  *
  * Implementation details:
  *  Uses RooFit classes.
- *  User is supposed to provide two histograms corresponding to 
- *    "tag + probePass" and "tag+probeFail" invariant masses.
- *  Use different signal and background PDFs for the 'probePass' 
- *    and 'probeFail' cases.   
+ *  User is supposed to provide six histograms corresponding to 
+ *    "tag + tag" and "tag+ Fail SC" invariant masses with 
+ *     BB, EB, and EE combination.
+ *  Use different signal and background PDFs for 'TT' and 'TF' cases.
  *
  * History:
  *   
  *
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
+
+//// The following three are the irreducible free parameters of the fit:
+////        Z cross section, efficiency_barrel, efficiency_endcap.
+////  Additionally, the following five nuisance parameters are floating:
+////        nBkgFail_BB,  nBkgFail_EB, nBkgFail_EE, bkgGamma, bkgGammaFail.
+////  If we have a lot more data, we can float three nBkgPass pars.
+
 
 // ROOT
 #include <TROOT.h>
@@ -158,7 +165,7 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
   // Now supply integrated luminosity in inverse picobarn
   // -->  we get this number from the CMS lumi group
   // https://twiki.cern.ch/twiki/bin/view/CMS/LumiWiki2010Data
-  RooRealVar lumi("lumi","lumi", 100.0);
+  RooRealVar lumi("lumi","lumi", 300.0);
 
 
   // Now define Z production cross section variable (in pb) 
@@ -178,19 +185,20 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
 
   // Define background yield variables: they are not related to each other  
-  RooRealVar nBkgPass_BB("nBkgPass_BB","nBkgPass_BB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar nBkgPass_EB("nBkgPass_EB","nBkgPass_EB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar nBkgPass_EE("nBkgPass_EE","nBkgPass_EE", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgPass_BB("nBkgPass_BB","nBkgPass_BB", 0.0);
+  RooRealVar nBkgPass_EB("nBkgPass_EB","nBkgPass_EB", 0.0);
+  RooRealVar nBkgPass_EE("nBkgPass_EE","nBkgPass_EE", 0.0);
 
-  RooRealVar nBkgFail_BB("nBkgFail_BB","nBkgFail_BB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar nBkgFail_EB("nBkgFail_EB","nBkgFail_EB", 1000.0, -10.0, 1000000000.0);
-  RooRealVar nBkgFail_EE("nBkgFail_EE","nBkgFail_EE", 1000.0, -10.0, 1000000000.0);
+  RooRealVar nBkgFail_BB("nBkgFail_BB","nBkgFail_BB",100.,-10.,1000000000.);
+  RooRealVar nBkgFail_EB("nBkgFail_EB","nBkgFail_EB", 100.,-10.,1000000000.);
+  RooRealVar nBkgFail_EE("nBkgFail_EE","nBkgFail_EE", 100.,-10.,1000000000.);
 
 
-  /////////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////
+  ////////////////////////////////////////////////////////////////////////////
  //  Define signal yield variables.  
-  // They are linked together by the total cross section:  e.g. Nbb = sigma*L*Abb*eff_BB
+  // They are linked together by the total cross section:  e.g. 
+  //          Nbb = sigma*L*Abb*eff_BB
 
   char* formula;
   RooArgList* args;
@@ -224,8 +232,8 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
   args = new RooArgList(lumi,xsec,acc_EE,eff_E);
   RooFormulaVar nSigFail_EE("nSigFail_EE",formula, *args);
   delete args;
-  /////////////////////////////////////////////////////////////////////////////////
-  /////////////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////////////
 
    RooArgList componentspass_BB(*signalShapePdfBB_, *bkgShapePdf_);
    RooArgList componentspass_EB(*signalShapePdfEB_, *bkgShapePdf_);
@@ -275,8 +283,9 @@ void ThreeBinSimZFitter( TH1& h_BB_pass, TH1& h_BB_fail,
 
   // ********* Do the Actual Fit ********** //  
    RooFitResult *fitResult = totalPdf.fitTo(*data, Save(true), 
-					    Extended(true), PrintEvalErrors(-1), 
-					    Warnings(false));
+					    Extended(true), 
+					    PrintEvalErrors(-1), 
+					    Warnings(false) );
   fitResult->Print("v");
 
 
