@@ -22,7 +22,10 @@
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
 //#include "SingleBinSimZFitter.C"
-#include "ThreeBinSimZFitter.C"
+//#include "ThreeBinSimZFitter.C"
+//#include "FourCategorySimZFitter.C"
+#include "ThreeCategorySimZFitter.C"
+
 
 void simFitZ()
 {
@@ -93,6 +96,11 @@ void simFitZ()
   ///////////////////////////////////////
   /////////////////////////////////////
   // SingleBinSimZFitter(*ZmassPass, *ZmassFail);
+  //ThreeBinSimZFitter(*ZmassPass_BB, *ZmassFail_BB, *ZmassPass_EB, *ZmassFail_EB, *ZmassPass_EE, *ZmassFail_EE);
 
-  ThreeBinSimZFitter(*ZmassPass_BB, *ZmassFail_BB, *ZmassPass_EB, *ZmassFail_EB, *ZmassPass_EE, *ZmassFail_EE);
+
+  // FourCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_EB, *ZmassFail_EE);
+
+  ZmassFail_EB->Add(ZmassFail_EE);
+  ThreeCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_EB);
 }
