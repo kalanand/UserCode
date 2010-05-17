@@ -21,86 +21,51 @@
  *
  * Copyright (C) 2010 FNAL 
  ********************************************************************/
-//#include "SingleBinSimZFitter.C"
-//#include "ThreeBinSimZFitter.C"
+#include "TwoCategorySimZFitter.C"
+//#include "ThreeCategorySimZFitter.C"
 //#include "FourCategorySimZFitter.C"
-#include "ThreeCategorySimZFitter.C"
 
 
 void simFitZ()
 {
-  TString inputFileName = "/uscms_data/d2/kalanand/trash/"
-     "Summer09-7TeV-ZeeJets-Pt_80_120.root";
-
   gROOT->ProcessLine(".L tdrstyle.C");
   setTDRStyle();
-  tdrStyle->SetPadLeftMargin(0.16);
-  tdrStyle->SetPadRightMargin(0.1);
-  tdrStyle->SetPadTopMargin(0.08);
   tdrStyle->SetLegendBorderSize(0);
 
+  TFile* f = new TFile("mikhail/lineshapesC.root");
+  TH1D* ZmassPass = (TH1D*) f->Get("passALL");
+  TH1D* ZmassFail = (TH1D*) f->Get("failALL");
+  TH1D* ZmassFail_BB = (TH1D*) f->Get("fail_BB");
+  TH1D* ZmassFail_E = (TH1D*) f->Get("fail_E");
+  TH1D* ZmassFail_EB = (TH1D*) f->Get("fail_BE");
+  TH1D* ZmassFail_EE = (TH1D*) f->Get("fail_EE");
 
-  TFile* f = new TFile(inputFileName);
-  TTree* t = (TTree*) f->Get("ZJet");
+  double lumi = 0.3;
+  ScaleToLumi(*ZmassPass, lumi);
+  ScaleToLumi(*ZmassFail, lumi);
+  ScaleToLumi(*ZmassFail_BB, lumi);
+  ScaleToLumi(*ZmassFail_EB, lumi);
+  ScaleToLumi(*ZmassFail_E, lumi);
+  ScaleToLumi(*ZmassFail_EE, lumi);
 
+  TwoCategorySimZFitter(*ZmassPass, *ZmassFail, lumi);
 
-  TCut passPlus =  "(ePlus_HoverE<0.05) && ((abs(ePlusEta)<1.4442" 
-    "&& ePlus_SigmaIetaIeta<0.01 && ePlus_DeltaEtaIn<0.0071)"
-    "|| (abs(ePlusEta)>1.56 && ePlus_SigmaIetaIeta<0.028 && ePlus_DeltaEtaIn<0.0066))";
-
-  TCut passMinus =  "(eMinus_HoverE<0.05) && ((abs(eMinusEta)<1.4442" 
-    "&& eMinus_SigmaIetaIeta<0.01 && eMinus_DeltaEtaIn<0.0071)"
-    "|| (abs(eMinusEta)>1.56 && eMinus_SigmaIetaIeta<0.028 && eMinus_DeltaEtaIn<0.0066))";
-
-
-  //////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////
-
-  TH1D* ZmassPass = new TH1D("ZmassPass", "", 40, 60, 120);
-  TH1D* ZmassFail = new TH1D("ZmassFail", "", 40, 60, 120);
-  TCut passCut =  "ePlus_HoverE<0.05 && eMinus_HoverE<0.05";
- 
-  t->Draw("mZee>>+ZmassPass", passPlus && passMinus, "goff");
-  t->Draw("mZee>>+ZmassFail", !passPlus && passMinus, "goff");
-  //////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////
-
-
-  TH1D* ZmassPass_BB = new TH1D("ZmassPass_BB", "", 40, 60, 120);
-  TH1D* ZmassPass_EB = new TH1D("ZmassPass_EB", "", 40, 60, 120);
-  TH1D* ZmassPass_EE = new TH1D("ZmassPass_EE", "", 40, 60, 120);
-
-  TH1D* ZmassFail_BB = new TH1D("ZmassFail_BB", "", 40, 60, 120);
-  TH1D* ZmassFail_EB = new TH1D("ZmassFail_EB", "", 40, 60, 120);
-  TH1D* ZmassFail_EE = new TH1D("ZmassFail_EE", "", 40, 60, 120);
+  // ThreeCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_E, lumi);
+  // FourCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_EB, 
+  //                        *ZmassFail_EE, lumi);
+}
 
 
 
+void ScaleToLumi( TH1& hist, double lumi) {
 
-  TCut bbCut =  "abs(ePlusEta)<1.4442 && abs(eMinusEta)<1.4442";
-  TCut ebCut = "(abs(ePlusEta)<1.4442 && abs(eMinusEta)>1.5660)"
-    "|| (abs(eMinusEta)<1.4442 && abs(ePlusEta)>1.5660)";
-  TCut eeCut =  "abs(ePlusEta)>1.5660 && abs(eMinusEta)>1.5660";
-  //  TCut failCut =  "ePlus_HoverE>0.05";
+  int bins = hist.GetNbinsX();
+  double entry = 0;
 
+  for(int i=0; i< bins; i++) {
+     entry = lumi*hist.GetBinContent(i+1);
+     hist.SetBinContent(i+1,  entry);
+     hist.SetBinError(i+1, sqrt(entry) );
+  }
 
-  t->Draw("mZee>>+ZmassPass_BB", passPlus && passMinus && bbCut, "goff");
-  t->Draw("mZee>>+ZmassPass_EB", passPlus && passMinus && ebCut, "goff");
-  t->Draw("mZee>>+ZmassPass_EE", passPlus && passMinus && eeCut, "goff");
-
-  t->Draw("mZee>>+ZmassFail_BB", !passPlus && passMinus  && bbCut, "goff");
-  t->Draw("mZee>>+ZmassFail_EB", !passPlus && passMinus  && ebCut, "goff");
-  t->Draw("mZee>>+ZmassFail_EE", !passPlus && passMinus  && eeCut, "goff");
-
-
-  ///////////////////////////////////////
-  /////////////////////////////////////
-  // SingleBinSimZFitter(*ZmassPass, *ZmassFail);
-  //ThreeBinSimZFitter(*ZmassPass_BB, *ZmassFail_BB, *ZmassPass_EB, *ZmassFail_EB, *ZmassPass_EE, *ZmassFail_EE);
-
-
-  // FourCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_EB, *ZmassFail_EE);
-
-  ZmassFail_EB->Add(ZmassFail_EE);
-  ThreeCategorySimZFitter(*ZmassPass, *ZmassFail_BB, *ZmassFail_EB);
 }

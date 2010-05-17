@@ -68,11 +68,11 @@ TCanvas *c;
 
 
 void FourCategorySimZFitter( TH1& h_TT, TH1& h_TF_BB, 
-			     TH1& h_TF_EB, TH1& h_TF_EE )
+			     TH1& h_TF_EB, TH1& h_TF_EE, double intLumi )
 {
 
   // The fit variable - lepton invariant mass
-  rooMass_ = new RooRealVar("Mass","m_{e^{+}e^{-}}", 
+  rooMass_ = new RooRealVar("Mass","m_{ee}", 
 			    60.0, 120.0, "GeV/c^{2}");
   rooMass_->setBins(120.0);
   RooRealVar Mass = *rooMass_;
@@ -127,7 +127,7 @@ void FourCategorySimZFitter( TH1& h_TT, TH1& h_TF_BB,
   // Now supply integrated luminosity in inverse picobarn
   // -->  we get this number from the CMS lumi group
   // https://twiki.cern.ch/twiki/bin/view/CMS/LumiWiki2010Data
-  RooRealVar lumi("lumi","lumi", 300.0);
+  RooRealVar lumi("lumi","lumi", intLumi);
 
 
   // Now define Z production cross section variable (in pb) 
@@ -289,9 +289,6 @@ void FourCategorySimZFitter( TH1& h_TT, TH1& h_TF_BB,
 
 
 
-
-
-
 // // ***** Function to return the signal Pdf *** //
  void makeSignalPdf() {
 
@@ -314,15 +311,11 @@ void FourCategorySimZFitter( TH1& h_TT, TH1& h_TF_BB,
 
 
 
-
-
-
 // ***** Function to return the background Pdf **** //
 void makeBkgPdf()
 {  
   // Background PDF variables
-   bkgGammaFailTF_ = new RooRealVar("bkgGammaFailTF","bkgGammaFailTF",0.5, -1000000., 10000000.);
-   bkgShapePdfTF_ = new RooPolynomial("bkgShapePdfTF","bkgShapePdfTF",*rooMass_, *bkgGammaFailTF_);
+   bkgGammaFailTF_ = new RooRealVar("bkgGammaFailTF","bkgGammaFailTF",-2., -20., 20.);
+   bkgShapePdfTF_ = new RooExponential("bkgShapePdfTF","bkgShapePdfTF",*rooMass_, *bkgGammaFailTF_);
+
 }
-
-
