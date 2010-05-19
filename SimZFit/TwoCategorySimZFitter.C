@@ -165,6 +165,21 @@ void TwoCategorySimZFitter( TH1& h_TT, TH1& h_TF, double intLumi)
 					    Extended(true),PrintEvalErrors(-1),Warnings(false) );
   fitResult->Print("v");
 
+   ///// generate toy MC ----> need for events with integer weight in each bin
+ 
+  RooDataSet *toy1 = pdfTT.generate(RooArgSet(Mass), (int) (h_TT.Integral()) ) ;
+  RooDataSet *toy2 = pdfTF.generate(RooArgSet(Mass), (int) (h_TF.Integral()) ) ;
+
+  RooDataHist* toydata1 = new RooDataHist("toydata1","binned toy data",
+  RooArgSet(*rooMass_),*toy1) ;
+  RooDataHist* toydata2 = new RooDataHist("toydata2","binned toy data",
+  RooArgSet(*rooMass_),*toy2) ;
+
+  RooDataHist* toydata = new RooDataHist( "toydata","toyata",
+				       RooArgList(Mass),Index(sample),
+				       Import("TT",*toydata1), Import("TF",*toydata2) ); 
+  fitResult = totalPdf.fitTo(*toydata, Save(true), 
+  Extended(true),PrintEvalErrors(-1),Warnings(false) );
 
   // ********** Make and save Canvas for the plots ********** //
   gROOT->ProcessLine(".L ~/tdrstyle.C");
@@ -178,30 +193,49 @@ void TwoCategorySimZFitter( TH1& h_TT, TH1& h_TF, double intLumi)
   RooAbsData::ErrorType errorType = RooAbsData::SumW2;
 
 
-  TString cname = TString("fit_canvas_") + h_TT.GetName();
+  TString cname = Form("Zmass_TT_%dnb_TwoCatFit", (int)(1000*intLumi) );
   c = new TCanvas(cname,cname,500,500);
-  sample.setLabel("TT");
   RooPlot* frame1 = Mass.frame();
-  data_TT->plotOn(frame1,RooFit::DataError(errorType));
-  pdfTT.plotOn(frame1,ProjWData(*data_TT));
+  // data_TT->plotOn(frame1,RooFit::DataError(errorType));
+  toydata1->plotOn(frame1,RooFit::DataError(errorType));
+  // pdfTT.plotOn(frame1,ProjWData(*data_TT));
+  pdfTT.plotOn(frame1,ProjWData(*toydata1));
+  frame1->SetMinimum(0);
   frame1->Draw("e0");
   c->SaveAs( cname + TString(".eps"));
   c->SaveAs( cname + TString(".gif"));
   c->SaveAs( cname + TString(".root"));
 
 
-  TString cname = TString("fit_canvas_") + h_TF.GetName();
+  TString cname = Form("Zmass_TF_%dnb_TwoCatFit", (int)(1000*intLumi) );
   c = new TCanvas(cname,cname,500,500);
-  sample.setLabel("TF");
   RooPlot* frame2 = Mass.frame();
-  data_TF->plotOn(frame2,RooFit::DataError(errorType));
-  pdfTF.plotOn(frame2,ProjWData(*data_TF),
+  // data_TF->plotOn(frame2,RooFit::DataError(errorType));
+  toydata2->plotOn(frame2,RooFit::DataError(errorType));
+  //pdfTF.plotOn(frame2,ProjWData(*data_TF),
+  //Components(*bkgShapePdfTF_),LineColor(kRed));
+  //pdfTF.plotOn(frame2,ProjWData(*data_TF));
+  pdfTF.plotOn(frame2,ProjWData(*toydata2),
   Components(*bkgShapePdfTF_),LineColor(kRed));
-  pdfTF.plotOn(frame2,ProjWData(*data_TF));
+  pdfTF.plotOn(frame2,ProjWData(*toydata2));
+  frame2->SetMinimum(0);
   frame2->Draw("e0");
   c->SaveAs( cname + TString(".eps"));
   c->SaveAs( cname + TString(".gif"));
   c->SaveAs( cname + TString(".root"));
+
+
+/*
+  RooMCStudy toymc( totalPdf, RooArgSet(*rooMass_, sample), Binned(kTRUE), 
+  FitModel(totalPdf), Extended(),FitOptions(Extended()));
+  toymc.generateAndFit(1000,numEventsToGenerate);
+
+  RooPlot* plot1 = toymc.plotPull( xsec, -4., 4., 24);
+  plot1->SetTitle("");
+  plot1->GetXaxis()->SetTitle("cross section pull");
+  TCanvas *c2 = new TCanvas("c2","Pull distribution of cross section",500,500);
+  plot1->Draw();
+*/
 
 
   //    if(data) delete data;
