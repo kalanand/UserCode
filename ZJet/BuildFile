@@ -1,9 +1,0 @@
-<use name=Geometry/CaloEventSetup>
-<use name=RecoCaloTools/Selectors>
-<use name=RecoEcal/EgammaCoreTools>
-<use name=JetMETCorrections/Objects>
-<flags EDM_PLUGIN=1>
-<export>
-   <lib name=JetMETCorrectionsZJet>
-   <use name=JetMETCorrections/Objects>
-</export>

@@ -1,6 +1,0 @@
-<use name=RecoCaloTools/Selectors>
-<use name=DataFormats/MuonReco>
-<flags EDM_PLUGIN=1>
-<export>
-   <lib name=ElectroWeakAnalysisLeptonJetAnalysis>
-</export>

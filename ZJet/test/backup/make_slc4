@@ -1,7 +1,0 @@
-#! /bin/csh
-g++ -m32 -Wall -I$ROOTSYS/include -c -o $1.o $1.cc
-g++ -m32 $1.o -L$ROOTSYS/lib -lCore -lCint -lHist -lGraf -lGraf3d -lGpad -lTree -lRint -lPostscript -lMatrix -lPhysics -lz -pthread -lm -ldl -rdynamic -o $1
-rm *.o
-
-
-
