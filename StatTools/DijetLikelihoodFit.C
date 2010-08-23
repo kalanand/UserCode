@@ -62,8 +62,6 @@
 
 #include <memory>
 #define intLumi 0.120 // integrated luminosity in inverse picobarn
-#define xsec_low 10.0 // cross section (pb) for lower reference resonance mass
-#define xsec_high 5.0 // cross section (pb) for higher reference resonance mass
 
 
 //  _     _ _                          
@@ -87,9 +85,26 @@ using namespace RooStats;
 // |_|   |_/_/\_\___|\__,_| |_|   \__,_|_|  \__,_|_| |_| |_|\___|\__\___|_|  |___/
 // 
 
+const bool drawFitResults=true;
+
 // set the variable range here
-const double minMass = 400.0;
-const double maxMass = 2000.0;
+const double minMass = 354.0;
+const double maxMass = 3019.0;
+
+const int nMassBins = 38;
+double massBoundaries[nMassBins+1] = 
+{354, 386, 419, 453, 489, 526, 565, 606, 649, 693, 
+ 740, 788, 838, 890, 944, 1000, 1058, 1118, 1181, 1246, 1313, 1383, 1455, 
+ 1530, 1607, 1687, 1770, 1856, 1945, 2037, 2132, 2231, 2332, 2438, 2546, 2659, 
+ 2775, 2895, 3019};
+
+// const int nMassBins = 61;
+// double massBoundaries[nMassBins+1] = 
+// {1, 3, 6, 10, 16, 23, 31, 40, 50, 61, 74, 88, 103, 119, 137, 156, 176, 197, 
+//  220, 244, 270, 296, 325, 354, 386, 419, 453, 489, 526, 565, 606, 649, 693, 
+//  740, 788, 838, 890, 944, 1000, 1058, 1118, 1181, 1246, 1313, 1383, 1455, 
+//  1530, 1607, 1687, 1770, 1856, 1945, 2037, 2132, 2231, 2332, 2438, 2546, 2659, 
+//  2775, 2895, 3019};
 
 
 //  ____                                                              
@@ -101,34 +116,24 @@ const double maxMass = 2000.0;
 
 void DijetLikelihoodFit()
 {
+   double xs[21];
 
-// For this demonstration, I am generating a 1 TeV signal resonance shape 
-// in the following way: I generate two Gaussian lineshapes with mean 
-// values 800 GeV and 1200 GeV and widths 100 GeV and 200 GeV respectively. 
-// Then I use template morphing to extrapolate lineshape at 1 TeV. 
-// In real life, Chiyoung/Sertac will provide us two histograms for the 
-// upper and lower reference shapes (generating with Pythia) and we will 
-// use template morphing to extrapolate for resonance values in between.   
-
-   TH1D* lower_hist = new TH1D("lower_hist","",100, minMass, maxMass);
-   TH1D* upper_hist = new TH1D("upper_hist","",100, minMass, maxMass);
-
-   TRandom3 *eventGenerator = new TRandom3(123999);
-   TRandom3 *eventGenerator2 = new TRandom3(534572);
-   double gaus;
-
-   for(int i=0; i<100000; ++i) {
-      gaus = eventGenerator->Gaus( 800., 100. );
-      lower_hist->Fill(gaus);
-      gaus = eventGenerator2->Gaus( 1200., 200. );
-      upper_hist->Fill(gaus);
+   /*
+   for(int i=0; i<16; ++i) {
+     cout << "#############################################" << endl;
+     cout << "Resonance mass = " << 500.+100.*i << endl;
+     
+     xs[i] = DijetLikelihoodFit( 500.+100.*i, 0.0, 0.0, true);
+     
+     cout << "#############################################" << endl;
    }
+   */
 
-   delete eventGenerator;
-   delete eventGenerator2;
+   DijetLikelihoodFit( 700., 0., 0., true);
 
-   DijetLikelihoodFit( lower_hist, upper_hist, 0.5, true);
 }
+
+
 
 //  __  __       _         _____                 _   _             
 // |  \/  | __ _(_)_ __   |  ___|   _ _ __   ___| |_(_) ___  _ __  
@@ -140,27 +145,55 @@ void DijetLikelihoodFit()
 // Returns the Confidence Level (CL) for signal + background hypothesis. 
 // Uses Wilks' theorem to translate -2 log (likelihood ratio) into a signifcance/p-value.
 
-double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5, 
-                bool drawFitResults=true) {
+double DijetLikelihoodFit(double resMass, double shiftInPeakFromJES=0.0, 
+                          double shiftInPeakFromJER=0.0, 
+                          bool doQCDFit = false) {
+
+   RooBinning fullRange( nMassBins, massBoundaries, "fullRange");
 
    // Our observable is the invariant mass
    RooRealVar invMass("invMass", "m_{dijet}", minMass, maxMass,"GeV");
- 
+   invMass.setBinning(fullRange, "fullRange");
+   TCanvas* cmc;
+   RooPlot* frame;
+   RooDataSet *data = RooDataSet::read("120nbm1_Dijet_Mass.txt", RooArgList(invMass));
+
+  char title[100];
+
+
    // define your signal and background models here
    // Make models for signal (q*) and background (QCD)
 
    // define RooDataHist from an existing histogram
-   RooDataHist sigDataHistLow("sigDataHistLow","",  invMass, lower_hist, xsec_low*intLumi);
-   RooDataHist sigDataHistHigh("sigDataHistHigh","",  invMass, upper_hist, xsec_high*intLumi);
+  int mMin=500, mMax=3500;
+   double xsec_low = 0.0; // cross section (pb) for lower reference resonance mass
+   double xsec_high = 0.0; // cross section (pb) for higher reference resonance mass
+   double mAlpha = 0.0;
 
+   if(resMass<500 || resMass>3500) return -1;
+   else if(resMass<700) { mMin=500; mMax=700; xsec_low=0.1472E+04; xsec_high=0.3562E+03; }
+   else if(resMass<1200) { mMin=700; mMax=1200; xsec_low=0.3562E+03; xsec_high=0.2449E+02; }
+   else if(resMass<2000) { mMin=1200; mMax=2000; xsec_low=0.2449E+02; xsec_high=0.8122E+00; }
+   else { mMin=2000; mMax=3500; xsec_low=0.8122E+00; xsec_high=0.2364E-02; }
+
+   TFile* finput = new TFile("dijetResonanceShape.root","read");
+   sprintf(title, "h_Djj_cor_%d", mMin);
+   TH1D* lower_hist = (TH1D*) finput->Get(title);
+   sprintf(title, "h_Djj_cor_%d", mMax);
+   TH1D* upper_hist = (TH1D*) finput->Get(title);
+
+   SetProperXRangeInDijetResonanceMassHistogram( *lower_hist, mMin);
+   SetProperXRangeInDijetResonanceMassHistogram( *upper_hist, mMax);
+
+
+   RooDataHist sigDataHistLow("sigDataHistLow","",  RooArgSet(invMass), lower_hist, intLumi*xsec_low);
+   RooDataHist sigDataHistHigh("sigDataHistHigh","",  RooArgSet(invMass), upper_hist, intLumi*xsec_high);
 
    // Lower end point shape: a histogram shaped p.d.f.
    RooHistPdf g1("g1", "", RooArgSet(invMass), sigDataHistLow);
 
-
    // Upper end point shape: also a histogram shaped p.d.f.
    RooHistPdf g2("g2", "", RooArgSet(invMass), sigDataHistHigh);
-
 
    //  _                       _       _                                    _     
    // | |_ ___ _ __ ___  _ __ | | __ _| |_ ___   _ __ ___   ___  _ __ _ __ | |__  
@@ -172,70 +205,61 @@ double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5,
    // C r e a t e   i n t e r p o l a t i n g   p d f  ("template morphing")
    // -----------------------------------------------------------------------
 
-   // Create interpolation variable: this is the distance from the lower reference mass
-   RooRealVar alpha("alpha","alpha", mAlpha) ;
+   // Create interpolation variable: this is the distance from the higher reference mass
+   RooRealVar upperRefMass("upperRefMass","mMax", (double) mMax);
+   RooRealVar lowerRefMass("lowerRefMass","mMin", (double) mMin);
+   RooRealVar m0("m0","m0", resMass) ;
 
-   // Specify sampling density on observable and interpolation variable
-   invMass.setBins(100,"cache") ;
-   alpha.setBins(100,"cache") ;
+   // The code below implements shift in resonance peak position due to jet energy scale.
+  RooRealVar deltam("deltam","deltam", shiftInPeakFromJES) ;
+  RooFormulaVar alpha("alpha","(@1-@2+@3)/(@1-@0)", 
+                      RooArgList(lowerRefMass, upperRefMass, m0, deltam)) ;
 
    // Construct interpolating pdf in (x,a) represent g1(x) at a=a_min
    // and g2(x) at a=a_max
-   RooIntegralMorph sigModel("sigModel","trueSignalShape",g1,g2,invMass,alpha) ;
+  RooIntegralMorph sigModel0("sigModel0","Signal Shape before resolution",g1,g2,invMass,alpha) ;
+
+  // The code below implements effect of jet energy smearing
+  RooRealVar deltasigma("deltasigma","deltasigma", 0.5 + shiftInPeakFromJER/resMass) ;
+  RooIntegralMorph sigModel("sigModel","Signal Shape after resolution",
+                             sigModel0, sigModel0, invMass, deltasigma) ;
 
 
-   // The code below implements resolution smearing due to jet energy scale.
-   // The JES will shift the resonance peak position somewhat, and JER will 
-   // make it broader. In order for the code below to work you must have 
-   // ROOT built with FFT (which is an external package for Fast Fourier 
-   // Transformation). I will work on making a small FFT binary which will 
-   // obviate the need for external FFT package. 
+   // Specify sampling density on observable and interpolation variable
+   invMass.setBins(100,"cache") ;
 
-/*
-   RooIntegralMorph trueSignalShape("trueSignalShape","trueSignalShape",g1,g2,invMass,alpha) ;
+   RooRealVar luminosity("luminosity","integrated luminosity", intLumi) ;
+   RooRealVar SigXS("SigXS", "Cross Section #times BR #times Acc. (pb)", 100.0, 0., 2000.);
+   RooProduct Nsig("Nsig", "# signal events", RooArgSet(luminosity, SigXS)) ;
 
-   // Include effect of jet energy scale (JES) and resolution (JER)
-   // JES will cause a shift in the resonance mass. Set it to 0 for the time being. 
-   RooRealVar bias("bias","bias",0., -100., 100.) ; 
-   // JER will cause a broadening of the resonance shape. Set the sigma to 1 for the time being.  
-   RooRealVar sigma("sigma","sigma", 1., 0., 100.) ; 
-
-   // Assume a Gaussian resolution model from JES/JER
-   RooGaussModel resModel("resModel","gaussian resolution model", invMass, bias, sigma);
-   invMass.setBins(1000,"cache") ;
-   RooFFTConvPdf sigModel("sigModel","final signal shape", invMass, trueSignalShape, resModel);
-*/
-   RooRealVar Nsig("Nsig", "# signal events", 500.0, 0.0, 10000.0);
 
 
    //////////////////////////////////////////////
    // make QCD model
-   RooRealVar a1("a1","a1",  4.0,   0.,  50.) ;  
-   RooRealVar a2("a2","a2",  5.0,   0.,  50.) ; 
-   RooRealVar a3("a3","a3",  3.0, -100., 100.) ; 
+   RooRealVar a1("a1","a1",  1.8533e-07,   0.,  10.) ;  
+   RooRealVar a2("a2","a2",  3.4204e+00,   0.,  10.) ; 
+   RooRealVar a3("a3","a3",  5.8554e-01,   0.,  10.) ; 
+//    RooGenericPdf qcdModel("qcdModel",
+//    "pow(1-invMass/7000.+a3*(invMass/7000.)**2,a1)/pow(invMass,a2)",
    RooGenericPdf qcdModel("qcdModel",
-   "pow(1-invMass/7000.+a3*(invMass/7000.)*(invMass/7000.),a1)/pow(invMass/7000.,a2)",
+   "pow(1-invMass/7000.,a1)/pow(invMass,a2+a3*log(invMass/7000.))",
    RooArgList(invMass,a1,a2, a3)); 
-   RooRealVar Nbkg("Nbkg", "# background events", 10000.0, 0.0, 10000000.0);
+
+   RooRealVar Nbkg("Nbkg", "# background events", data->numEntries(), 0., 10000000.);
 
 
    //////////////////////////////////////////////
    // combined model
-   // Introduce mu: the signal strength in units of the expectation.  
-   // eg. mu = 1 is the SM, mu = 0 is no signal, mu=2 is 2x the SM
-   //  RooRealVar mu("mu","signal strength in units of SM expectation",0.01,0.,1.) ; 
-
-
    // full model
    RooAddPdf model("model","sig+qcd background",RooArgList(sigModel,qcdModel),
    RooArgList(Nsig, Nbkg)); 
 
 
 //set the precision for the integral of the model here
-   RooNumIntConfig* cfg = RooAbsReal::defaultIntegratorConfig();
-   cfg->setEpsAbs(1E-4);
-   cfg->setEpsRel(1E-4);
-   model.setIntegratorConfig(*cfg);
+//   RooNumIntConfig* cfg = RooAbsReal::defaultIntegratorConfig();
+//   cfg->setEpsAbs(1E-6);
+//   cfg->setEpsRel(1E-6);
+//   model.setIntegratorConfig(*cfg);
 
 
    //plot sig candidates, full model, and individual componenets 
@@ -251,26 +275,6 @@ double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5,
    tdrStyle->SetOptStat(0); 
    tdrStyle->SetStatColor(1);
 
- 
-
-   ////// for debug ==> to make sure that I can generate the pdf shape
-   TCanvas* cmc;
-   RooPlot* frame;
-   RooDataSet *data;
-
-   if(drawFitResults) {
-     // generate some events to display model shape
-      data = model.generate(RooArgList(invMass), 10000);
-      cmc = new TCanvas("cmc","Generated signal + background shape",500,500);
-      frame = invMass.frame() ; 
-      data->plotOn(frame ) ; 
-      model.plotOn(frame, LineColor(kBlue)) ;   
-      gPad->SetLogy();
-      frame->GetYaxis()->SetNoExponent();
-      frame->GetYaxis()->SetRangeUser(1E-1,1E+4);
-      frame->SetTitle("signal + background model");
-      frame->Draw() ;
-   }
 
 
    // Main interface to get a HypoTestResult.
@@ -290,29 +294,81 @@ double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5,
 
 
    // here we explicitly fit for the null hypothesis
-   Nsig.setVal(0.0);
-   Nsig.setConstant(kTRUE);
+//   Nsig.setVal(0.0);
+//   Nsig.setConstant(kTRUE);
 //   bias.setConstant(kTRUE);
 //   sigma.setConstant(kTRUE);
 
-   RooFitResult* fit2 = model.fitTo(*data, Hesse(kFALSE),Minos(kTRUE),
-   Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE), Extended(kTRUE));
-   Double_t NLLatCondMLE= fit2->minNll();
-   fit2->Print();
+   SigXS.setVal(0.0);
+   SigXS.setConstant(kTRUE);
+
+   RooFitResult* fit2; 
+   Double_t NLLatCondMLE;
+
+   if(doQCDFit) {
+      fit2 = model.fitTo(*data, Hesse(kFALSE),Minos(kTRUE),
+      Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE), Extended(kTRUE));
+      NLLatCondMLE= fit2->minNll();
+      fit2->Print();
+   }
+   else 
+      NLLatCondMLE = -2659.31;
+
+   cout << "NLL with NULL hypothesis = " << NLLatCondMLE << endl;
+
 
    //plot data and null hypothesis fit
    TCanvas* cdataNull;
    if(drawFitResults) {
       cdataNull = new TCanvas("cdataNull","fit with null hypothesis",500,500);
       frame = invMass.frame() ; 
-      data->plotOn(frame ) ; 
+      data->plotOn(frame, Binning("fullRange"), DataError(RooAbsData::Poisson) ) ; 
       model.plotOn(frame, LineColor(kBlue)) ;   
-      model.paramOn(frame, Layout(0.4, 0.85, 0.98), Format("NEU",AutoPrecision(1)) ); 
+      model.paramOn(frame, Layout(0.43, 0.88, 0.92), Format("NEU",AutoPrecision(1)) ); 
       gPad->SetLogy();
+      frame->GetXaxis()->SetRangeUser(360,2500);
       frame->GetYaxis()->SetNoExponent();
-      frame->GetYaxis()->SetRangeUser(1E-3,1E+4);
+      frame->GetYaxis()->SetRangeUser(1E-2,1E+4);
+      frame->GetYaxis()->SetTitle("Events / bin");
+      frame->GetYaxis()->SetTitleOffset(1.5);
       frame->SetTitle("fit to data with null hypothesis");
       frame->Draw() ;
+      sprintf(title, "#chi^{2}/#nu = %.2f", frame->chiSquare());
+      TLatex tex;
+      tex.SetNDC();
+      tex.SetTextAlign(12);
+      tex.SetTextSize(0.04);
+      tex.DrawLatex(0.22,0.88, title);
+      cdataNull->SaveAs("plot_dijetmass_fitNULL.gif");
+      cdataNull->SaveAs("plot_dijetmass_fitNULL.eps");
+      cdataNull->SaveAs("plot_dijetmass_fitNULL.root");
+
+
+    // S h o w   r e s i d u a l   a n d   p u l l   d i s t s  
+      RooHist* hresid = frame->residHist() ;
+      RooPlot* frame2 = invMass.frame(Title("Residual Distribution")) ;
+      frame2->addPlotable(hresid,"P") ;    
+      RooHist* hpull = frame->pullHist() ;   
+      RooPlot* frame3 = invMass.frame(Title("Pull Distribution")) ;
+      frame3->addPlotable(hpull,"P") ;
+
+      TCanvas* cResidualNULL = new TCanvas("cResidualNULL","Residual Distribution",1000,500);
+      cResidualNULL->Divide(2) ;
+      cResidualNULL->cd(1) ; 
+      gPad->SetLeftMargin(0.15) ; 
+      frame2->GetXaxis()->SetRangeUser(360,2500);
+      frame2->GetYaxis()->SetTitleOffset(1.3) ; 
+      frame2->GetYaxis()->SetTitle("Residual = Data - Fit");
+      frame2->Draw() ;
+      cResidualNULL->cd(2) ; 
+      gPad->SetLeftMargin(0.15) ; 
+      frame3->GetXaxis()->SetRangeUser(360,2500);
+      frame3->GetYaxis()->SetTitleOffset(1) ; 
+      frame3->GetYaxis()->SetTitle("Pull = (Data - Fit) / Error");
+      frame3->Draw() ;
+      cResidualNULL->SaveAs("plot_dijetmass_residual_NULL.gif");
+      cResidualNULL->SaveAs("plot_dijetmass_residual_NULL.eps");
+      cResidualNULL->SaveAs("plot_dijetmass_residual_NULL.root");
    }
 
 
@@ -324,31 +380,105 @@ double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5,
    //                                                   |___/|_|           
 
    // calculate MLE for the signal hypothesis
-   Nsig.setConstant(kFALSE);
-   // bias.setConstant(kFALSE);
-   // sigma.setConstant(kFALSE);
+ 
+   SigXS.setConstant(kFALSE);
 
    RooFitResult* fit = model.fitTo(*data,Hesse(kFALSE),Minos(kTRUE),
    Save(kTRUE),PrintLevel(-1),SumW2Error(kTRUE), Extended(kTRUE));
    fit->Print();
    Double_t NLLatMLE= fit->minNll();
-
+   cout << "NLL with S+B hypothesis = " << NLLatMLE << endl;
 
    // plot data and signal hypothesis fit
    TCanvas* cdata;
+   TCanvas* cNLL;
    if(drawFitResults) {
       cdata = new TCanvas("cdata","fit with signal hypothesis",500,500);
       frame = invMass.frame() ; 
-      data->plotOn(frame ) ;
+      data->plotOn(frame, Binning("fullRange"), DataError(RooAbsData::Poisson) ) ;
       model.plotOn(frame) ;   
       model.plotOn(frame,Components(sigModel),LineStyle(kDashed), LineColor(kRed)) ;   
-      model.plotOn(frame,Components(qcdModel),LineStyle(kDashed),LineColor(kGreen)) ;  
-      model.paramOn(frame, Layout(0.4, 0.85, 0.98), Format("NEU",AutoPrecision(1)) ); 
+      model.plotOn(frame,Components(qcdModel),LineStyle(kDashed),LineColor(kBlack)) ;  
+      model.paramOn(frame, Layout(0.43, 0.88, 0.92), Format("NEU",AutoPrecision(1)) ); 
       gPad->SetLogy();
+      frame->GetXaxis()->SetRangeUser(360,2500);
       frame->GetYaxis()->SetNoExponent();
-      frame->GetYaxis()->SetRangeUser(1E-3,1E+4);
+      frame->GetYaxis()->SetRangeUser(1E-2,1E+4);
+      frame->GetYaxis()->SetTitleOffset(1.5);
+      frame->GetYaxis()->SetTitle("Events / bin");
       frame->SetTitle("fit to data with signal hypothesis");
       frame->Draw() ;
+      sprintf(title, "#chi^{2}/#nu = %.2f", frame->chiSquare());
+      TLatex tex;
+      tex.SetNDC();
+      tex.SetTextAlign(12);
+      tex.SetTextSize(0.04);
+      tex.DrawLatex(0.22,0.88, title);
+      sprintf(title, "plot_dijetmass_fitSplusB_%d.gif", (int) resMass);
+      cdata->SaveAs(title);
+      sprintf(title, "plot_dijetmass_fitSplusB_%d.eps", (int) resMass);
+      cdata->SaveAs(title);
+      sprintf(title, "plot_dijetmass_fitSplusB_%d.root", (int) resMass);
+      cdata->SaveAs(title);
+
+
+    // S h o w   r e s i d u a l   a n d   p u l l   d i s t s
+    // -------------------------------------------------------
+    
+   //// Construct a histogram with the residuals of the data w.r.t. the curve
+      RooHist* hresid = frame->residHist() ;
+      // Create a new frame to draw the residual distribution 
+      // and add the distribution to the frame
+      RooPlot* frame2 = invMass.frame(Title("Residual Distribution")) ;
+      frame2->addPlotable(hresid,"P") ;    
+
+      ///// Construct a histogram with the pulls of the data w.r.t the curve
+      RooHist* hpull = frame->pullHist() ;   
+
+      //// Create a new frame to draw the pull distribution 
+      //// and add the distribution to the frame
+      RooPlot* frame3 = invMass.frame(Title("Pull Distribution")) ;
+      frame3->addPlotable(hpull,"P") ;
+
+
+      TCanvas* cResidual = new TCanvas("cResidual","Residual Distribution",1000,500);
+      cResidual->Divide(2) ;
+      cResidual->cd(1) ; 
+      gPad->SetLeftMargin(0.15) ; 
+      frame2->GetXaxis()->SetRangeUser(360,2500);
+      frame2->GetYaxis()->SetTitleOffset(1.3) ; 
+      frame2->GetYaxis()->SetTitle("Residual = Data - Fit");
+      frame2->Draw() ;
+      cResidual->cd(2) ; 
+      gPad->SetLeftMargin(0.15) ; 
+      frame3->GetYaxis()->SetTitleOffset(1) ; 
+      frame3->GetXaxis()->SetRangeUser(360,2500);
+      frame3->GetYaxis()->SetTitle("Pull = (Data - Fit) / Error");
+      frame3->Draw() ;
+      sprintf(title, "plot_dijetmass_residualSplusB_%d.gif", (int) resMass);
+      cResidual->SaveAs(title);
+      sprintf(title, "plot_dijetmass_residualSplusB_%d.eps", (int) resMass);
+      cResidual->SaveAs(title);
+      sprintf(title, "plot_dijetmass_residualSplusB_%d.root", (int) resMass);
+      cResidual->SaveAs(title);
+
+
+      // Draw likelihood as a function of signal cross section
+      cNLL = new TCanvas("cNLL","Posterior PDF",500,500);
+      RooAbsReal* nll = model.createNLL(*data) ;
+      RooRealVar nllMin("nllMin","nllMin",NLLatMLE);
+      RooAbsReal* lh = new RooFormulaVar("lh", "exp(-@0+@1)", RooArgList(*nll, nllMin));
+      RooPlot* framea = SigXS.frame(0,1000,100) ;
+      lh->plotOn(framea) ;
+      framea->GetYaxis()->SetTitle("Likelihood / Max Likelihood");
+      framea->GetXaxis()->SetNdivisions(505);
+      framea->Draw() ;
+      sprintf(title, "plot_dijetmass_PLLxsec_%d.gif", (int) resMass);
+      cNLL->SaveAs(title);
+      sprintf(title, "plot_dijetmass_PLLxsec_%d.eps", (int) resMass);
+      cNLL->SaveAs(title);
+      sprintf(title, "plot_dijetmass_PLLxsec_%d.root", (int) resMass);
+      cNLL->SaveAs(title);
    }
 
 
@@ -381,9 +511,28 @@ double DijetLikelihoodFit(TH1D* lower_hist, TH1D* upper_hist, double mAlpha=0.5,
    cout << "Corresponding to a signal signifcance of " << significance << endl;
    cout << "-------------------------------------------------\n\n" << endl;
 
+   return significance;
 }
 
 
 
 
 
+
+
+
+// set x = m/m0 in the range to 0.3 -- 1.3
+void SetProperXRangeInDijetResonanceMassHistogram(TH1& hist, double mass) {
+
+   const unsigned int numBins = hist.GetNbinsX();
+   double x;
+
+   for( int i=0; i<numBins; ++i) {
+      x = hist.GetBinCenter(i+1);
+      if(x/mass<0.28 || x/mass>1.32) {
+         hist.SetBinContent(i+1, 0.0);
+         hist.SetBinError(i+1, 0.0);
+      }
+   }
+
+}
