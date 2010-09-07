@@ -560,9 +560,9 @@ void ThreeCategorySimZFitter( TH1& h_TT, TH1& h_TF_BB, TH1& h_TF_End,
   th1_TT->Add(histebpass);
   th1_TT->Add(histeepass);
 
-  massShiftTT = new RooRealVar("massShiftTT","",-0.54483.);//, -3., 3.);
-  massShiftTF_BB = new RooRealVar("massShiftTF_BB","",-1.12);//, -5., 5.);
-  massShiftTF_End = new RooRealVar("massShiftTF_End","",-1.4332);//, -5., 5.);
+  massShiftTT = new RooRealVar("massShiftTT","",-0.54483., -3., 3.);
+  massShiftTF_BB = new RooRealVar("massShiftTF_BB","",-1.12, -5., 5.);
+  massShiftTF_End = new RooRealVar("massShiftTF_End","",-1.4332, -5., 5.);
 
 
   shiftedMassTT = new RooFormulaVar("shiftedMassTT", 
