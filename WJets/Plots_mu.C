@@ -192,7 +192,7 @@ void olcmspreliminary(void) {
 // Function
 // ====================================================================================
 void ollumi(void) {
-   char tmpc[100];   sprintf(tmpc, "#int #font[12]{L} dt = %0.1f pb^{-1}", 
+   char tmpc[100];   sprintf(tmpc, "#int #font[12]{L} dt = %d pb^{-1}", 
    xsecs[0][2]/(xsecs[0][0]*xsecs[0][1]*xsecs[0][3]));
   TLatex * t = new TLatex;
   t->SetNDC();
@@ -317,6 +317,8 @@ void GenPlot(const char * outfilename = "tmp",
     hh[i]   =    (TH1F*) (*(getHist(filenames[i], histname, rflag))).Clone(tpname);
     hh[i]->Sumw2(); 
     hh[i]->Scale(datalumi/lumi[i]);
+    if( TString(filenames[i]).Contains("WJets") && strhname.Contains("mlvjj")) hh[i]->Scale(0.93);
+
     if (i!=5 && i!=6) { // skip signal MC
       hh[i]->SetFillColor(iColor++); if(i==6)hh[i]->SetFillColor(95);
       Leg->AddEntry(hh[i],  rootnames[i],  "f");  Tss->Add(hh[i]);}
@@ -341,6 +343,8 @@ void GenPlot(const char * outfilename = "tmp",
   // sprintf(tmpc,"Events / %i GeV",int(hdata->GetBinWidth(1)) );
   //  if (slog==2)    
   sprintf(tmpc, "Events / %.2f GeV", hdata->GetBinWidth(1) );
+  if(strhname.Contains("mjj") || strhname.Contains("mlvjj") )
+    sprintf(tmpc, "Events / %d GeV", hdata->GetBinWidth(1) );
   hdata->SetMinimum(0.1);
   hdata->SetYTitle(tmpc);
   hdata->GetYaxis()->SetTitleOffset(1.8);
@@ -368,6 +372,7 @@ void GenPlot(const char * outfilename = "tmp",
   hdata->Draw("e");
   Tss->Draw("samehist");
   if (slog==1) hdasb->Draw("e");
+  if (rflag==0 && slog==0 && !(TString(histname).Contains("ttb"))) hh[2]->Draw("samehist");
   hh[5]->SetLineStyle(2);
   hh[5]->SetLineColor(45);
   hh[5]->SetLineWidth(3);
@@ -424,6 +429,14 @@ void Plots_mu(int outflag = 2){
     GenPlot("Figures/certified11-mlnujj-deltaPhiCut_mjj60to100",             "m_{l#nujj} [GeV]",                            "hh_lvjj_kkmlvjj",   0,0);
     GenPlot("Figures/certified11-subtracted-mlnujj-deltaPhiCut_mjj60to100",  "m_{l#nujj} [GeV]",                            "hh_lvjj_kkmlvjj",   1,0);
 
+
+   GenPlot("Figures/certified11-mjj-dPhiCutOnly",                       "m_{jj} [GeV]",                                "hh_lvjj_kkmjj_dphi",     0,0);
+    GenPlot("Figures/certified11-subtracted-mjj-dPhiCutOnly",            "m_{jj} [GeV]",                                "hh_lvjj_kkmjj_dphi",     1,0);
+    GenPlot("Figures/certified11-mlnujj-dPhiCut_mjj60to100",             "m_{l#nujj} [GeV]",                            "hh_lvjj_kkmlvjj_dphi",   0,0);
+    GenPlot("Figures/certified11-subtracted-mlnujj-dPhiCut_mjj60to100",  "m_{l#nujj} [GeV]",                            "hh_lvjj_kkmlvjj_dphi",   1,0);
+
+
+    /*
     GenPlot("Figures/certified11-cosJacksonW_inWWframe",                     "cos#theta_{Jackson} (W, WW)",                 "hh_lvjj_cosanwinww",0,0);
     GenPlot("Figures/certified11-cosDecayPlaneWW",                           "cos#phi_{DecayPlane}^{CM} WW",                "hh_lvjj_phipl",     0,0);
     GenPlot("Figures/certified11-cosJacksonL_inWframe",                      "cos#theta_{Jackson} (l, l#nu)",               "hh_lvjj_ctuv",      0,0);
@@ -434,7 +447,7 @@ void Plots_mu(int outflag = 2){
     GenPlot("Figures/certified11-j1metdphi",                                 "#Delta #phi(j1, MET)", "hh_lvjj_ljmetdphi",                        0,0);
     GenPlot("Figures/certified11-wwdphi",                                    "#Delta #phi (W_{#mu#nu}, W_{jj})", "hh_lvjj_wwdphi",               0,0);
 
-
+    */
     ////  2011 DCS ONLY Data
 /*
     GenPlot("Figures/dcsOnly-topEvents-mjj.eps",                             "m_{jj} [GeV]",                                "hh_ttb_mjj_all",    0,0);

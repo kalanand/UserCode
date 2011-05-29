@@ -42,11 +42,19 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
    // Out Put Histogram Here!
    TH1F *hh_btag_SSVHE       = new TH1F("hh_btag_SSVHE",         "",    100,  -10,    10);
 
-   TH1F *hh_ttb_mjj_all      = new TH1F("hh_ttb_mjj_all",        "",     45,    40,   400);
-   TH1F *hh_ttb_mjj_nob      = new TH1F("hh_ttb_mjj_nob",        "",     45,    40,   400);
+   TH1F *hh_ttb_mjj_all      = new TH1F("hh_ttb_mjj_all",        "",     30,    50,   200);
+   TH1F *hh_ttb_mjj_nob      = new TH1F("hh_ttb_mjj_nob",        "",     30,    50,   200);
 
-   TH1F *hh_lvjj_mjj         = new TH1F("hh_lvjj_mjj",           "",     45,    40,   400);
-   TH1F *hh_lvjj_mlvjj       = new TH1F("hh_lvjj_mlvjj",         "",     30,    150,  600);
+   TH1F *hh_lvjj_mjj         = new TH1F("hh_lvjj_mjj",           "",     30,    50,   200);
+   TH1F *hh_lvjj_kkmjj       = new TH1F("hh_lvjj_kkmjj",         "",     30,    50,   200);
+   TH1F *hh_lvjj_kkmjj_dphi  = new TH1F("hh_lvjj_kkmjj_dphi",    "",     30,    50,   200);
+   TH1F *hh_lvjj_dgmjj       = new TH1F("hh_lvjj_dgmjj",         "",     30,    50,   200);
+
+   TH1F *hh_lvjj_mlvjj       = new TH1F("hh_lvjj_mlvjj",         "",     30,    160,  460);
+   TH1F *hh_lvjj_kkmlvjj     = new TH1F("hh_lvjj_kkmlvjj",       "",     30,    160,  460);
+   TH1F *hh_lvjj_kkmlvjj_dphi= new TH1F("hh_lvjj_kkmlvjj_dphi",  "",     30,    160,  460);
+   TH1F *hh_lvjj_dgmlvjj     = new TH1F("hh_lvjj_dgmlvjj",       "",     30,    160,  460);
+
 
    TH1F *hh_lvjj_cosanwinww  = new TH1F("hh_lvjj_cosanwinww",    "",    10,   -1,     1);
    TH1F *hh_lvjj_phipl       = new TH1F("hh_lvjj_phipl",         "",    40,   -1,     1);
@@ -59,11 +67,9 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
    TH1F *hh_lvjj_ljmetdphi   = new TH1F("hh_lvjj_ljmetdphi",     "",    32,  0.0,   3.141593);
    TH1F *hh_lvjj_wwdphi      = new TH1F("hh_lvjj_wwdphi",        "",    25,  2.15,   3.15);
 
-   TH1F *hh_lvjj_dgmjj       = new TH1F("hh_lvjj_dgmjj",         "",     45,    40,    400);
-   TH1F *hh_lvjj_dgmlvjj     = new TH1F("hh_lvjj_dgmlvjj",       "",     30,    150,   600);
-								 
-   TH1F *hh_lvjj_kkmjj       = new TH1F("hh_lvjj_kkmjj",         "",     45,    40,    400);
-   TH1F *hh_lvjj_kkmlvjj     = new TH1F("hh_lvjj_kkmlvjj",       "",     30,    150,   600);
+ 								 
+
+
 
    const double btssvloose = 1.19;
    const double btssvmdium = 1.93;
@@ -89,10 +95,10 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
 
 
       // -----CUT! Good Muon,
-      if ( !( event_met_pfmet>25. 
+      if ( !( event_met_pfmet>20. 
 	      && W_muon_pt>25. 
           && fabs(W_muon_eta)<2.4 
-	      && muiso<0.15
+	      && muiso<0.02
 	      ) ) continue;
 
       // ----- Count pfJet Btaging
@@ -128,21 +134,9 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
 	}
       }
       // ----- WuvWjj event selection, basic event seletion : two no-btag jets with pt>20 GeV
-      if (   JetPFCor_Pt[0] > 20
-	  && JetPFCor_Pt[1] > 20
-	  && JetPFCor_Pt[2] < 20
-      && JetPFCor_NeutralHadronEnergyFrac[0]<0.9
-      && JetPFCor_NeutralEmEnergyFrac[0]<0.9
-      && JetPFCor_ChargedHadronEnergyFrac[0]>0.1
-      && JetPFCor_ChargedEmEnergyFrac[0]<0.9
-      && JetPFCor_NeutralHadronEnergyFrac[1]<0.9
-      && JetPFCor_NeutralEmEnergyFrac[1]<0.9
-      && JetPFCor_ChargedHadronEnergyFrac[1]>0.1
-      && JetPFCor_ChargedEmEnergyFrac[1]<0.9
-      && JetPFCor_ElectronEnergyFraction[0]<0.1
-      && JetPFCor_MuonEnergyFraction[0]<0.1
-      && JetPFCor_ElectronEnergyFraction[1]<0.1
-      && JetPFCor_MuonEnergyFraction[1]<0.1
+      if (   JetPFCor_Pt[0] > 25
+	  && JetPFCor_Pt[1] > 25
+	  && JetPFCor_Pt[2] < 25
 	  && tbtagmdium[0]  < 0.5
 	  && tbtagmdium[1]  < 0.5
 	  ) {
@@ -177,12 +171,12 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
     Bool_t cut1KM = ( wwdphi    >  2.84 );
     Bool_t cut2KM = ( jjcentral <  1.5  );
     Bool_t cut3KM = ( ljmetdphi >  0.5  );
-    Bool_t cut4KM = ( fabs(phipl) > 0.5);
-    Bool_t cut5KM = ( fabs(cosanwinww) < 1.0 );
+    Bool_t cut4KM = ( fabs(phipl) > 0.0);
+    Bool_t cut5KM = ( fabs(cosanwinww) < 2.0 );
     Bool_t cut6KM =  (ctjj > -0.6  && ctjj < 0.8);
     Bool_t cut7KM = ( ctuv > -0.8 && ctuv < 0.8);
     Bool_t cut8KM = ( jac     >  0.2 );
-    Bool_t cut9KM = (jjdphi > 0.5 &&  jjdphi < 2.5);
+    Bool_t cut9KM = (jjdphi > -3.5 &&  jjdphi < 3.5);
 
 
     Bool_t cutKM = cut1KM && cut2KM && cut3KM && cut4KM && cut5KM &&
@@ -233,6 +227,12 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
 	  if (massjj>60&&massjj<100) hh_lvjj_kkmlvjj->Fill(masslvjj);
 	}
 	
+
+	//  -----SET.3 Final Mjj and Mlvjj after cut1 of Kalanand's cuts 
+	if ( cut1KM ){	  
+	  hh_lvjj_kkmjj_dphi->Fill(massjj);
+	  if (massjj>60&&massjj<100) hh_lvjj_kkmlvjj_dphi->Fill(masslvjj);
+	}      
       }
       
    }
@@ -263,8 +263,9 @@ void WmunuJetsHistoMaker::Loop(int wda, int wsp,
    hh_lvjj_dgmlvjj->Write();
 
    hh_lvjj_kkmjj->Write();
+   hh_lvjj_kkmjj_dphi->Write();
    hh_lvjj_kkmlvjj->Write();
-
+   hh_lvjj_kkmlvjj_dphi->Write();
    fresults.Close();
 
 
@@ -283,32 +284,32 @@ void WmunuJetsHistoMaker::myana()
 //   Init(myChain);Loop( 2011, 0,                              "RD_WmunuJets_Data2011_231invpb_May9DCS.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Data2011_178invpb_May6JSON.root"); 
-  Init(myChain);Loop( 2011, 0,                              "RD_WmunuJets_Data2011_178invpb_May6JSON.root");
+  myChain->Add("data/WmunuJets_Data_260invpb.root"); 
+  Init(myChain);Loop( 2011, 0,                              "RD_WmunuJets_Data_260invpb.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_WJets.root"); 
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_WJets.root"); 
   Init(myChain);Loop( 2011, 1,                              "RD_WmunuJets_Spring11MC_WJets.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_TTToLNu2Q2B.root"); 
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_TTToLNu2Q2B.root"); 
   Init(myChain);Loop( 2011, 2,                              "RD_WmunuJets_Spring11MC_TTToLNu2Q2B.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_WZtoAnything.root"); 
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_WZtoAnything.root"); 
   Init(myChain);Loop( 2011, 3,                              "RD_WmunuJets_Spring11MC_WZtoAnything.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_WWtoAnything.root"); 
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_WWtoAnything.root"); 
   Init(myChain);Loop( 2011, 4,                              "RD_WmunuJets_Spring11MC_WWtoAnything.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_WWToLNuQQ_M-180.root"); 
-  Init(myChain);Loop( 2011, 5,                              "RD_WmunuJets_Spring11MC_WWToLNuQQ_M-180.root");
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_WWToLNuQQ_M-200.root"); 
+  Init(myChain);Loop( 2011, 5,                              "RD_WmunuJets_Spring11MC_WWToLNuQQ_M-200.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add("WmunuJets_Spring11MC_WWToLNuQQ_M-300.root"); 
-  Init(myChain);Loop( 2011, 6,                              "RD_WmunuJets_Spring11MC_WWToLNuQQ_M-300.root");
+  myChain->Add("data/WmunuJets_CMSSW415-Spring11MC_WWToLNuQQ_M-250.root"); 
+  Init(myChain);Loop( 2011, 6,                              "RD_WmunuJets_Spring11MC_WWToLNuQQ_M-250.root");
 
 
 

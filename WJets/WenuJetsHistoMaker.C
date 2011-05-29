@@ -40,14 +40,22 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
    // Out Put File Here
    TFile fresults = TFile(outfilename,"RECREATE");
    // Out Put Histogram Here!
+
+   TH1F *hh_ttb_mjj_all      = new TH1F("hh_ttb_mjj_all",        "",     30,    50,   200);
+   TH1F *hh_ttb_mjj_nob      = new TH1F("hh_ttb_mjj_nob",        "",     30,    50,   200);
+
+   TH1F *hh_lvjj_mjj         = new TH1F("hh_lvjj_mjj",           "",     30,    50,   200);
+   TH1F *hh_lvjj_dgmjj       = new TH1F("hh_lvjj_dgmjj",         "",     30,    50,   200);
+   TH1F *hh_lvjj_kkmjj       = new TH1F("hh_lvjj_kkmjj",         "",     30,    50,   200);
+   TH1F *hh_lvjj_kkmjj_dphi  = new TH1F("hh_lvjj_kkmjj_dphi",    "",     30,    50,   200);
+
+   TH1F *hh_lvjj_mlvjj       = new TH1F("hh_lvjj_mlvjj",         "",     30,    160,   460);
+   TH1F *hh_lvjj_dgmlvjj     = new TH1F("hh_lvjj_dgmlvjj",       "",     30,    160,   460);
+   TH1F *hh_lvjj_kkmlvjj     = new TH1F("hh_lvjj_kkmlvjj",       "",     30,    160,   460);
+   TH1F *hh_lvjj_kkmlvjj_dphi= new TH1F("hh_lvjj_kkmlvjj_dphi",  "",     30,    160,   460);
+
+
    TH1F *hh_btag_SSVHE       = new TH1F("hh_btag_SSVHE",         "",    100,  -10,    10);
-
-   TH1F *hh_ttb_mjj_all      = new TH1F("hh_ttb_mjj_all",        "",     72,    40,   400);
-   TH1F *hh_ttb_mjj_nob      = new TH1F("hh_ttb_mjj_nob",        "",     72,    40,   400);
-
-   TH1F *hh_lvjj_mjj         = new TH1F("hh_lvjj_mjj",           "",     72,    40,   400);
-   TH1F *hh_lvjj_mlvjj       = new TH1F("hh_lvjj_mlvjj",         "",     30,    150,  600);
-
    TH1F *hh_lvjj_cosanwinww  = new TH1F("hh_lvjj_cosanwinww",    "",    10,   -1,     1);
    TH1F *hh_lvjj_phipl       = new TH1F("hh_lvjj_phipl",         "",    40,   -1,     1);
    TH1F *hh_lvjj_ctuv        = new TH1F("hh_lvjj_ctuv",          "",    20,   -1,     1);
@@ -59,11 +67,7 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
    TH1F *hh_lvjj_ljmetdphi   = new TH1F("hh_lvjj_ljmetdphi",     "",    32,  0.0,   3.141593);
    TH1F *hh_lvjj_wwdphi      = new TH1F("hh_lvjj_wwdphi",        "",    25,  2.15,   3.15);
 
-   TH1F *hh_lvjj_dgmjj       = new TH1F("hh_lvjj_dgmjj",         "",     72,    40,    400);
-   TH1F *hh_lvjj_dgmlvjj     = new TH1F("hh_lvjj_dgmlvjj",       "",     30,    150,   600);
-								 
-   TH1F *hh_lvjj_kkmjj       = new TH1F("hh_lvjj_kkmjj",         "",     72,    40,    400);
-   TH1F *hh_lvjj_kkmlvjj     = new TH1F("hh_lvjj_kkmlvjj",       "",     30,    150,   600);
+
 
    const double btssvloose = 1.19;
    const double btssvmdium = 1.93;
@@ -92,13 +96,13 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
 
 
       // -----CUT! Good Electron,
-      if ( !( event_met_pfmet>25. 
+      if ( !( event_met_pfmet>20. 
 	      && W_electron_pt>30. 
 	      && W_mt>50. 
-          && sqrt( pow(W_electron_vx-event_PVx[0],2)+pow(W_electron_vy-event_PVy[0],2)) < 0.02
+      // && sqrt( pow(W_electron_vx-event_PVx[0],2)+pow(W_electron_vy-event_PVy[0],2)) < 0.02
 	      && W_electron_isWP80 
-      && ( (fabs(W_electron_eta)<1.5 && eleiso<0.04 && fabs(W_electron_deltaphi_in)<0.03 && fabs(W_electron_deltaeta_in)<0.004) 
-             || (fabs(W_electron_eta)>1.5 && eleiso<0.03 && fabs(W_electron_deltaphi_in)<0.02 && fabs(W_electron_deltaeta_in)<0.005) )
+      && ( (fabs(W_electron_eta)<1.5 && eleiso<0.02 && fabs(W_electron_deltaphi_in)<0.03 && fabs(W_electron_deltaeta_in)<0.004) 
+             || (fabs(W_electron_eta)>1.5 && eleiso<0.02 && fabs(W_electron_deltaphi_in)<0.02 && fabs(W_electron_deltaeta_in)<0.005) )
 	      ) ) continue;
 
       // ----- Count pfJet Btaging
@@ -134,28 +138,11 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
 	}
       }
       // ----- WuvWjj event selection, basic event seletion : two no-btag jets with pt>20 GeV
-      if (   JetPFCor_Pt[0] > 20
-	  && JetPFCor_Pt[1] > 20
-	  && JetPFCor_Pt[2] < 20
-      && JetPFCor_NeutralHadronEnergyFrac[0]<0.9
-      && JetPFCor_NeutralEmEnergyFrac[0]<0.9
-      && JetPFCor_ChargedHadronEnergyFrac[0]>0.1
-      && JetPFCor_ChargedEmEnergyFrac[0]<0.9
-      && JetPFCor_NeutralHadronEnergyFrac[1]<0.9
-      && JetPFCor_NeutralEmEnergyFrac[1]<0.9
-      && JetPFCor_ChargedHadronEnergyFrac[1]>0.1
-      && JetPFCor_ChargedEmEnergyFrac[1]<0.9
-      && JetPFCor_ElectronEnergyFraction[0]<0.1
-      && JetPFCor_MuonEnergyFraction[0]<0.1
-      && JetPFCor_ElectronEnergyFraction[1]<0.1
-      && JetPFCor_MuonEnergyFraction[1]<0.1
+      if (   JetPFCor_Pt[0] > 25
+	  && JetPFCor_Pt[1] > 25
+	  && JetPFCor_Pt[2] < 25
 	  && tbtagmdium[0]  < 0.5
 	  && tbtagmdium[1]  < 0.5
-      //  && JetPFCor_nConstituents[0]>10
-      //  && JetPFCor_nConstituents[1]>10
-      // && fabs(JetPFCor_dphiBoson[0]) > 2.
-      // && fabs(JetPFCor_dphiBoson[1]) > 1.
-      // && JetPFCor_Pt[1]/JetPFCor_Pt[0]>0.3
 	  ) {
          size_t Aj = 0; 
          size_t Bj = 1;
@@ -188,12 +175,12 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
     Bool_t cut1KM = ( wwdphi    >  2.84 );
     Bool_t cut2KM = ( jjcentral <  1.5  );
     Bool_t cut3KM = ( ljmetdphi >  0.5  );
-    Bool_t cut4KM = ( fabs(phipl) > 0.5);
+    Bool_t cut4KM = ( fabs(phipl) > 0.0);
     Bool_t cut5KM = ( fabs(cosanwinww) < 1.0 );
     Bool_t cut6KM =  (ctjj > -0.6  && ctjj < 0.8);
     Bool_t cut7KM = ( ctuv > -0.8 && ctuv < 0.8);
     Bool_t cut8KM = ( jac     >  0.2 );
-    Bool_t cut9KM = (jjdphi > 0.5 &&  jjdphi < 2.5);
+    Bool_t cut9KM = (jjdphi > -3.5 &&  jjdphi < 3.5);
 
 
     Bool_t cutKM = cut1KM && cut2KM && cut3KM && cut4KM && cut5KM &&
@@ -244,7 +231,13 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
 	  if (massjj>60&&massjj<100) hh_lvjj_kkmlvjj->Fill(masslvjj);
 	}
 	
-      }
+	//  -----SET.3 Final Mjj and Mlvjj after only dphi cuts 
+	if ( cut1KM ){	  
+	  hh_lvjj_kkmjj_dphi->Fill(massjj);
+	  if (massjj>60&&massjj<100) hh_lvjj_kkmlvjj_dphi->Fill(masslvjj);
+	}
+
+	  }
       
    }
 
@@ -274,7 +267,9 @@ void WenuJetsHistoMaker::Loop(int wda, int wsp,
    hh_lvjj_dgmlvjj->Write();
 
    hh_lvjj_kkmjj->Write();
+   hh_lvjj_kkmjj_dphi->Write();
    hh_lvjj_kkmlvjj->Write();
+   hh_lvjj_kkmlvjj_dphi->Write();
 
    fresults.Close();
 
@@ -294,32 +289,34 @@ void WenuJetsHistoMaker::myana()
 //   Init(myChain);Loop( 2011, 0, "Histo_Data_WenuJets_2011_231invpb_May9DCS.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "WenuJets_CMSSW415-Data2011-May13CTJSON_190pb-1.root"); 
-  Init(myChain);Loop( 2011, 0, "Histo_Data_WenuJets_2011_190invpb_May13JSON.root");
+  myChain->Add(                "data/WenuJets_Data_225invpb.root"); 
+  Init(myChain);Loop( 2011, 0, "Histo_Data_WenuJets_225invpb.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_WJets_enujj_Spring11.root"); 
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_WJets.root"); 
   Init(myChain);Loop( 2011, 1, "Histo_MC_WJets_enujj_Spring11.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_TT_enujj_Spring2011.root"); 
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_TTToLNu2Q2B.root"); 
   Init(myChain);Loop( 2011, 2, "Histo_MC_TT_enujj_Spring2011.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_WZ_enujj_Spring11.root"); 
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_WZtoAnything.root"); 
   Init(myChain);Loop( 2011, 3, "Histo_MC_WZ_enujj_Spring11.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_WW_enujj_Spring11.root"); 
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_WWtoAnything.root"); 
   Init(myChain);Loop( 2011, 4, "Histo_MC_WW_enujj_Spring11.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_HWW_180GeV_enujj_Spring2011.root"); 
-  Init(myChain);Loop( 2011, 5, "Histo_MC_HWW_180GeV_enujj_Spring2011.root");
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_WWToLNuQQ_M-200.root"); 
+  Init(myChain);Loop( 2011, 5, "Histo_MC_HWW_200GeV_enujj_Spring2011.root");
 
   myChain = new TChain("WJet");  
-  myChain->Add(                "MC_HWW_300GeV_enujj_Spring2011.root"); 
-  Init(myChain);Loop( 2011, 6, "Histo_MC_HWW_300GeV_enujj_Spring2011.root");
+  myChain->Add(                "data/WenuJets_CMSSW415-Spring11MC_WWToLNuQQ_M-250.root"); 
+  Init(myChain);Loop( 2011, 6, "Histo_MC_HWW_250GeV_enujj_Spring2011.root");
+
+
 
 
 //   // 2010 data
