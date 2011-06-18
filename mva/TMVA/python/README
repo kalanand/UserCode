@@ -1,0 +1,19 @@
+TMVClassification.py is a PyROOT-based analysis model for TMVA in Python. 
+
+PyROOT requires a Python version > 2.2. More information can be found here:
+http://root.cern.ch/root/HowtoPyROOT.html
+
+Notes to the user: 
+------------------
+Should you encounter window export problems of the following type:
+
+   "Error in <RootX11ErrorHandler>: BadAtom (invalid Atom parameter) (XID: 39, XREQ: 18)"
+
+when importing ROOT classes into python, please add the following lines to 
+your /etc/ssh/ssh_config file:
+
+   ForwardX11 yes
+   ForwardX11Trusted yes
+
+========================================================================================
+

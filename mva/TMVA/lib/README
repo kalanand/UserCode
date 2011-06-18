@@ -1,0 +1,4 @@
+This README file is needed, so that the directory is not empty and hence still
+gets created (checked out) even if -P option is used in cvs (use the -P option 
+because otherwise obsolete directories will be created).
+
