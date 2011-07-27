@@ -1,0 +1,9 @@
+cd /uscms_data/d2/maravin/CMSSW_4_1_3/src
+source /uscmst1/prod/sw/cms/cshrc prod
+cmsenv
+cd -
+cd /uscms_data/d2/cplager/root/root_v5.27.06
+setenv ROOTSYS $PWD
+setenv PATH $ROOTSYS/bin:$PATH
+setenv LD_LIBRARY_PATH $ROOTSYS/lib:$LD_LIBRARY_PATH
+cd -

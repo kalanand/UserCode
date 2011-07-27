@@ -1,0 +1,13 @@
+universe = vanilla
+Executable = {EXECUTABLE}
+Requirements   =  OpSys == "LINUX" && (Arch =="INTEL" || Arch =="x86_64")
+Should_Transfer_Files = Yes
+when_to_transfer_output = ON_EXIT
+Output = {OUTPUT}
+Error  = {ERROR}
+Log    = {LOG}
++UseSL5=TRUE
+notify_user = {NOTIFY}
+Queue 1
+
+

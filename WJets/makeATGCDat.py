@@ -10,15 +10,20 @@ Values = ["-0.25d0", "-0.2d0", "-0.15d0", "-0.1d0", "-0.05d0", "0.05d0", "0.1d0"
 
 
 def changeConfigFile(index, change):
+    dirName = parameters_wo_brackets[index] + change 
+    child = os.system("mkdir "+dirName)
+    child1 = os.system("cd "+dirName)    
+    child2 = os.system( "ln -s ../Pdfdata " +dirName + "/Pdfdata")
+    child3 = os.system( "ln -s ../process.DAT " +dirName + "/process.DAT")
+    child4 = os.system("cd ..")       
     fin  = open(ConfigFile)
-    pset_cfg      = "aTGC_" + parameters_wo_brackets[index] + change + ".DAT"
+    pset_cfg      = dirName + "/aTGC_" + dirName + ".DAT"
     fout = open(pset_cfg,"w")
     for line in fin.readlines():
         if  line.find(parameters[index])!=-1:
             line=line.replace("0.0d0", change )       
         fout.write(line)
     print pset_cfg + " has been written.\n"
-
 
 ###################
 for i in range(len(parameters)):
