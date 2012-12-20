@@ -1,3 +1,25 @@
+/*******************************************************************
+ * Project: CMS detector at the CERN
+ *
+ * Package: Presently in the user code
+ *
+ *
+ * Authors:
+ *
+ *   Kalanand Mishra, Fermilab - kalanand@fnal.gov
+ *
+ * Description:
+ *   Plots muon Level-1 trigger efficiency  
+ *
+ * Implementation details:
+ *   Simple ROOT macro to plot L1 efficiency.
+ *   Match L1 muon to UCT15 calo deposit to compute isolation.
+ *
+ * History:
+ *   
+ *
+ * Copyright (C) 2012 FNAL 
+ ********************************************************************/
 
 
 void plotEfficiency() 
@@ -6,14 +28,14 @@ void plotEfficiency()
   plotEfficiency("Eta", -2.5, 2.5);
 
 
-  plotEfficiency("Pt", 0., 120., 0, 10);
-  plotEfficiency("Pt", 0., 120., 10, 25);
-  plotEfficiency("Pt", 0., 120., 25, 50);
+  plotEfficiency("Pt", 0., 120., 14);
+  plotEfficiency("Pt", 0., 120., 18);
+  plotEfficiency("Pt", 0., 120., 24);
 
 
-  plotEfficiency("Eta", -2.5, 2.5, 0, 10);
-  plotEfficiency("Eta", -2.5, 2.5, 10, 25);
-  plotEfficiency("Eta", -2.5, 2.5, 25, 50);
+  plotEfficiency("Eta", -2.5, 2.5, 14);
+  plotEfficiency("Eta", -2.5, 2.5, 18);
+  plotEfficiency("Eta", -2.5, 2.5, 24);
 
 }
 
@@ -21,7 +43,7 @@ void plotEfficiency()
 
 
 
-void plotEfficiency(char* var, double min, double max, int NPVmin=0, int NPVmax=50) {
+void plotEfficiency(char* var, double min, double max, int l1PtMin=0) {
   TFile*f1 =  TFile::Open("efficiency_tree_Zmumu_merged.root");
   f1->cd("muonEfficiency");
   TTree* tree1 = (TTree*) gDirectory->Get("Ntuple");
@@ -33,40 +55,70 @@ void plotEfficiency(char* var, double min, double max, int NPVmin=0, int NPVmax=
 
 
   ///// ----- Define your cuts ----------
-  char cuts[100];
-  sprintf(cuts, "nPVs>%d && nPVs<%d", NPVmin, NPVmax);
+  char l1PtMinStr[100];
+  sprintf(l1PtMinStr, "l1Pt>%d", l1PtMin);
+  TCut l1PtMinCut(l1PtMinStr);
+  TCut cutNPV0("(nPVs>-1)");
+  TCut cutNPV1("(nPVs>=0 && nPVs<15)");
+  TCut cutNPV2("(nPVs>=15 && nPVs<25)");
+  TCut cutNPV3("(nPVs>=25 && nPVs<200)");
+  TCut l1isoCut("(abs(l1gDR)>0.2 || (l1gRegionEt/l1Pt<0.5))");
 
 
   ///// ----- Create all the histograms ----------
   TH1D* allReco = new TH1D("allReco", "", nBins, min, max);
   allReco->SetLineWidth(2);
   allReco->Sumw2();
+  TH1D* allRecoNPV1 = allReco->Clone("allRecoNPV1");
+  TH1D* allRecoNPV2 = allReco->Clone("allRecoNPV2");
+  TH1D* allRecoNPV3 = allReco->Clone("allRecoNPV3");
 
-  TH1D* isoReco = allReco->Clone("isoReco");
-  isoReco->GetYaxis()->SetRangeUser(0.5, 1.1);
-  isoReco->GetYaxis()->SetTitle("Efficiency");
+
+
+  TH1D* l1iso = allReco->Clone("l1iso");
+  TH1D* l1isoNPV1 = allReco->Clone("l1isoNPV1");
+  TH1D* l1isoNPV2 = allReco->Clone("l1isoNPV2");
+  TH1D* l1isoNPV3 = allReco->Clone("l1isoNPV3");
+
+
+  l1isoNPV1->SetLineColor(4);
+  l1isoNPV1->SetMarkerColor(4);
+  l1isoNPV2->SetLineColor(6);
+  l1isoNPV2->SetMarkerColor(6);
+  l1isoNPV3->SetLineColor(2);
+  l1isoNPV3->SetMarkerColor(2);
+
+  l1iso->GetYaxis()->SetRangeUser(0.5, 1.1);
+  l1iso->GetYaxis()->SetTitle("L1 Efficiency");
   char* xtitle = var;
-  if(var=="Pt") xtitle = "Muon p_{T} (GeV)";
-  if(var=="Eta") xtitle = "Muon #eta";
-  isoReco->GetXaxis()->SetTitle(xtitle);
+  if(var=="Pt") xtitle = "Offline muon p_{T} (GeV)";
+  if(var=="Eta") xtitle = "Offline muon #eta";
+  l1iso->GetXaxis()->SetTitle(xtitle);
 
 
-  TH1D* l1isoReco = allReco->Clone("l1isoReco");
-  l1isoReco->SetLineColor(2);
-  l1isoReco->SetMarkerColor(2);
-  TString varName = TString("reco") + TString(var);
+
 
 
   ///// ----- Draw from tree ----------
-  tree1->Draw(varName+TString(">>allReco"),cuts,"goff");
-  tree1->Draw(varName+TString(">>isoReco"), TString(cuts)+TString(" && dr04PFIsoCombinedRel<0.2"),"goff");
-  tree1->Draw(varName+TString(">>l1isoReco"),TString(cuts)+TString(" && abs(l1gDR)>0.3"),"goff");
+  TString varName = TString("reco") + TString(var);
+  tree1->Draw(varName+TString(">>allReco"),cutNPV0,"goff");
+  tree1->Draw(varName+TString(">>allRecoNPV1"),cutNPV1,"goff");
+  tree1->Draw(varName+TString(">>allRecoNPV2"),cutNPV2,"goff");
+  tree1->Draw(varName+TString(">>allRecoNPV3"),cutNPV3,"goff");
+
+  tree1->Draw(varName+TString(">>l1iso"),l1PtMinCut && cutNPV0 && l1isoCut,"goff");
+  tree1->Draw(varName+TString(">>l1isoNPV1"),l1PtMinCut && cutNPV1 && l1isoCut,"goff");
+  tree1->Draw(varName+TString(">>l1isoNPV2"),l1PtMinCut && cutNPV2 && l1isoCut,"goff");
+  tree1->Draw(varName+TString(">>l1isoNPV3"),l1PtMinCut && cutNPV3 && l1isoCut,"goff");
+
+
 
 
   //// ---- Now divide by allReco histogram to obtain efficiency ----
-  isoReco->Divide(allReco);
-  l1isoReco->Divide(allReco);
-
+  l1iso->Divide(allReco);
+  l1isoNPV1->Divide(allRecoNPV1);
+  l1isoNPV2->Divide(allRecoNPV2);
+  l1isoNPV3->Divide(allRecoNPV3);
 
 
   // --- plot the efficiency histograms ------ 
@@ -80,29 +132,47 @@ void plotEfficiency(char* var, double min, double max, int NPVmin=0, int NPVmax=
 
 
   TCanvas* canEffIso = new TCanvas("canEffIso","",500,500);
-  isoReco->Draw("e");
-  l1isoReco->Draw("esame");
-  TLegend* legend = new TLegend(0.4,0.25,0.9,0.45);
+  l1iso->SetFillColor(5);
+  l1iso->Draw("e3");
+  l1iso->Draw("esame");
+  l1isoNPV1->Draw("psame");
+  l1isoNPV2->Draw("psame");
+  l1isoNPV3->Draw("psame");
+  l1iso->Draw("esame");
+
+  TLegend* legend = new TLegend(0.45,0.15,0.9,0.45);
   legend->SetFillColor(0);
-  legend->AddEntry(isoReco, "Offline Pf Iso (<0.2)", "PLE");  
-  legend->AddEntry(l1isoReco, "Online L1 Iso (dR>0.3)", "PLE");  
+  legend->AddEntry(l1iso, "All NPV", "PLE");  
+  legend->AddEntry(l1isoNPV1, "NPV: 0-15", "PLE");  
+  legend->AddEntry(l1isoNPV2, "NPV: 15-25", "PLE");  
+  legend->AddEntry(l1isoNPV3, "NPV: 25-above", "PLE"); 
   legend->Draw();
   cmsPrelim();
 
   TString plotname = TString("muonEfficiency_")+TString(var);
   char tempst[100];
-  sprintf(tempst, "nPV_%d-%d", NPVmin, NPVmax);
-  if(!(NPVmin==0 && NPVmax==50)) plotname += TString(tempst);
-
+  sprintf(tempst, "_l1Pt_%d", l1PtMin);
+  plotname += TString(tempst);
+  canEffIso->SetGridy();
   canEffIso->SaveAs(plotname+TString(".png"));
+  canEffIso->SaveAs(plotname+TString(".pdf"));
 
 
   //--------- Finally clean up the memory -------
   delete allReco;
-  delete isoReco;
-  delete l1isoReco;
+  delete allRecoNPV1;
+  delete allRecoNPV2;
+  delete allRecoNPV3;
+  delete l1iso;
+  delete l1isoNPV1;
+  delete l1isoNPV2;
+  delete l1isoNPV3;
+
   delete canEffIso;
   delete legend;
+
+
+
 }
 
 

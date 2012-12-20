@@ -1,9 +1,31 @@
+/*******************************************************************
+ * Project: CMS detector at the CERN
+ *
+ * Package: Presently in the user code
+ *
+ *
+ * Authors:
+ *
+ *   Kalanand Mishra, Fermilab - kalanand@fnal.gov
+ *
+ * Description:
+ *   Plots muon Level-1 trigger turnon curve  
+ *
+ * Implementation details:
+ *   Simple ROOT macro to plot L1 turnon curve.
+ *   Match L1 muon to UCT15 calo deposit to compute isolation.
+ *
+ * History:
+ *   
+ *
+ * Copyright (C) 2012 FNAL 
+ ********************************************************************/
 
 
 void plotTurnonCurve() 
 {
-  plotTurnonCurve("Pt", 16., 62.);
-  plotTurnonCurve("Eta", -2.5, 2.5);
+  plotTurnonCurve("Pt", 16., 100.);
+  // plotTurnonCurve("Eta", -2.5, 2.5);
 
 
 //   plotTurnonCurve("Pt", 0., 120., 0, 10);
@@ -21,7 +43,7 @@ void plotTurnonCurve()
 
 
 
-void plotTurnonCurve(char* var, double min, double max, int NPVmin=0, int NPVmax=50) {
+void plotTurnonCurve(char* var, double min, double max, int NPVmin=0, int NPVmax=200) {
   TFile*f1 =  TFile::Open("efficiency_tree_Zmumu_merged.root");
   f1->cd("muonEfficiency");
   TTree* tree1 = (TTree*) gDirectory->Get("Ntuple");
@@ -34,7 +56,7 @@ void plotTurnonCurve(char* var, double min, double max, int NPVmin=0, int NPVmax
 
   ///// ----- Define your cuts ----------
   char cuts[100];
-  sprintf(cuts, "nPVs>%d && nPVs<%d && dr04PFIsoCombinedRel<0.2 && abs(l1gDR)>0.3 && l1gPt/recoPt<0.5", NPVmin, NPVmax);
+  sprintf(cuts, "nPVs>%d && nPVs<%d && (abs(l1gDR)>0.2 || (l1gRegionEt/recoPt<0.5))", NPVmin, NPVmax);
 
 
   ///// ----- Create all the histograms ----------
@@ -131,9 +153,10 @@ void plotTurnonCurve(char* var, double min, double max, int NPVmin=0, int NPVmax
   TString plotname = TString("muonTurnonCurve_")+TString(var);
   char tempst[100];
   sprintf(tempst, "nPV_%d-%d", NPVmin, NPVmax);
-  if(!(NPVmin==0 && NPVmax==50)) plotname += TString(tempst);
+  if(!(NPVmin==0 && NPVmax==200)) plotname += TString(tempst);
 
   canEffIso->SaveAs(plotname+TString(".png"));
+  canEffIso->SaveAs(plotname+TString(".pdf"));
 
 
   //--------- Finally clean up the memory -------
