@@ -1,0 +1,38 @@
+// -*- c++ -*-
+template<class T>
+int DataHandler<T>::getActVtx(int nVtx)
+{ Random::RandomEngine* engine = Random::RandomEngine::instance();
+  return engine->ipoisson(nVtx); }
+
+template<class T>
+bool DataHandler<T>::fillEvent(T& dataSource,Event& event,long long& nPtr,
+			       int nVtx)
+{
+  // find number of vertices this event
+  long long nActVtx = nVtx > 0 ? (long long)getActVtx(nVtx) 
+    : (long long)(abs(nVtx)); 
+  //
+  int iVtx = 1;
+  long long iEntry(0);
+  long long term(nPtr+nActVtx);
+  while ( nPtr<term && iEntry >= 0 )
+    {
+      iEntry = dataSource.LoadTree(nPtr);
+      if ( iEntry >= 0 )
+	{
+	  // load entry
+	  dataSource.GetEntry(nPtr);
+	  // get PseudoJets
+	  std::vector<fastjet::PseudoJet> vJet;
+	  Converters::convertToPJ(dataSource,
+				  dataSource.Npartons,
+				  dataSource.Nentry,
+				  iVtx,vJet);
+	  // add to event
+	  event.add(vJet);
+	  ++iVtx;
+	}
+      ++nPtr;
+    }
+  return iEntry >= 0;
+}
