@@ -20,17 +20,21 @@ struct configData
   int           mu;
   std::string   fileList;
   std::string   outFile;
+  std::string   signalFile;
   long long     nevents;
   bool          mainNameTag;
   bool          muTag;
   bool          fileListTag;
   bool          outFileTag;
+  bool          signalFileTag;
   bool          neventsTag;
   bool          PUsub;
 
   configData() 
-    : mainName("main"),mu(1),fileList("NONE"),outFile("test.root"),nevents(-1),
-      mainNameTag(false),muTag(false),fileListTag(false),outFileTag(false),
+    : mainName("main"),mu(1),fileList("NONE"),outFile("test.root"),
+      signalFile("signal_Zprime.root"),nevents(-1),
+      mainNameTag(false),muTag(false),fileListTag(false),
+      outFileTag(false),signalFileTag(false),
       neventsTag(false),PUsub(false)
   {}
 };
@@ -57,6 +61,9 @@ void interpretConfig(int argc,char** argv,configData& config)
       else if ( fStr->find("--output=") != std::string::npos )
 	{ config.outFile = fStr->substr(fStr->find("=")+1); 
 	  config.outFileTag = true; }
+      else if ( fStr->find("--signalfile=") != std::string::npos )
+	{ config.signalFile = fStr->substr(fStr->find("=")+1); 
+	  config.signalFileTag = true; }
       else if ( fStr->find("--nevts=") != std::string::npos )
 	{ config.nevents = atoi((fStr->substr(fStr->find("=")+1)).c_str()); 
 	  config.neventsTag = true; }
@@ -84,6 +91,9 @@ void printConfig(configData& config)
   if ( config.outFileTag ) { printf("\n"); } else { printf(" [default]\n"); }
   printf("[%s] - INFO - Pileup subtraction ............................. \042%s\042\n",
 	 config.mainName.c_str(),config.PUsub ? "true" : "false");
+  printf("[%s] - INFO - signal ROOT file name ............................. \042%s\042",
+	 config.mainName.c_str(),config.signalFile.c_str());
+  if ( config.signalFileTag ) { printf("\n"); } else { printf(" [default]\n"); }
   if ( config.nevents > 0 )
     { printf("[%s] - INFO - number of events to be analyzed ....... %i",
 	     config.mainName.c_str(),(int)config.nevents); }
@@ -127,10 +137,15 @@ int main(int argc,char** argv)
 	 config.mainName.c_str(),(int)lofFiles.size(),chain->GetEntries());
 
 
+  // ------- signal tree --------
+  TChain* sigTree = new TChain("Zprime_Py8");
+  sigTree->Add(config.signalFile.c_str(),-1);
+
+
   // analysis module
   MB_Py8* pData = new MB_Py8(config.mu,chain);
-
-  pData->Loop(config.mu,config.nevents,config.outFile,config.PUsub);
+  MB_Py8* sigData = new MB_Py8(0,sigTree);
+  pData->Loop(config.mu,config.nevents,config.outFile,sigData,config.PUsub);
 
   return 0;
 };

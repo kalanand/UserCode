@@ -74,7 +74,7 @@ public :
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TChain *tree);
   virtual void     Loop(int mu=1,Long64_t nevts=-1,
-			const std::string& outName="",bool PUsub=false);
+			const std::string& outName="",MB_Py8* sigData=0, bool PUsub=false);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 
@@ -334,8 +334,8 @@ protected:
 
   bool book();
   bool write(const std::string& outName="");
-  bool analyze(Event& pEvt, bool PUsub);
-  void analyzeJetSubstructure(Event& pEvt, std::vector<fastjet::PseudoJet> pPart, 
+  bool analyze(Event& pEvt, Event& sigEvt, bool PUsub);
+  void analyzeJetSubstructure(std::vector<fastjet::PseudoJet> pPart, 
 			      fastjet::JetAlgorithm jetAlgo, 
 			      double mJetRadius, bool PUsub);
   

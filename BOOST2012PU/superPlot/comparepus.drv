@@ -1,5 +1,27 @@
-ALIAS.var	ALIAS.xtitle		ALIAS.xmin	ALIAS.xmax	ALIAS.ymin	ALIAS.ymax
-jetmass		Jet Mass (GeV)		0		500		0		120
-jetpt		Jet p_{T} (GeV)		0		800		0		100
-jetarea		Jet Area		0		5		0		500
-tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+ALIAS.cm	ALIAS.pu	ALIAS.var	ALIAS.xtitle		ALIAS.xmin	ALIAS.xmax	ALIAS.ymin	ALIAS.ymax
+8TeV		noPUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		noPUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		noPUsub	jetarea		Jet Area		0		5		0		500
+8TeV		noPUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		noPUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		noPUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		noPUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		noPUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		noPUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		noPUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		noPUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		noPUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		noPUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		PUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		PUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		PUsub	jetarea		Jet Area		0		5		0		500
+8TeV		PUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		PUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		PUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		PUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		PUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		PUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		PUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		PUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		PUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		PUsub	jetarea_ft	Jet Area		0		5		0		500

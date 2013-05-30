@@ -40,7 +40,7 @@ void EtaRange::reset()
 { }
 
 
-void MB_Py8::Loop(int mu,Long64_t nevts,const std::string& outName, bool PUsub)
+void MB_Py8::Loop(int mu,Long64_t nevts,const std::string& outName, MB_Py8* sigData, bool PUsub)
 {
 
    if (fChain == 0) return;
@@ -57,24 +57,32 @@ void MB_Py8::Loop(int mu,Long64_t nevts,const std::string& outName, bool PUsub)
 
    book();
 
-   Long64_t nentries = fChain->GetEntries();
+   // Long64_t nentries = fChain->GetEntries();
    Long64_t ientries = 0;
    
    Event*               pEvt = new Event(new EtaRange(-6.,6.));
    DataHandler<MB_Py8>* pHdl = new DataHandler<MB_Py8>();
 
+
+   // ------- Now get the signal -------------
+   Event*               sigEvt = new Event(new EtaRange(-6.,6.));
+   DataHandler<MB_Py8>* sigHdl = new DataHandler<MB_Py8>();
+
+
    if ( nevts > 0 )
      {
        Long64_t ievts(0);
-       while ( ievts < ntot && pHdl->fillEvent(*this,*pEvt,ientries,mu) ) 
+       while ( ievts < ntot && pHdl->fillEvent(*this,*pEvt,ientries,mu) && 
+	       sigHdl->fillEvent(*sigData,*sigEvt,ientries,0)) 
 	 { ++ievts; ticker((Long64_t)pEvt->nVertices(),1000,ntot); 
-	   analyze(*pEvt, PUsub); pEvt->reset(); }
+	   analyze(*pEvt, *sigEvt, PUsub); pEvt->reset(); sigEvt->reset();}
      }
-   else
+   else 
      { 
-       while ( pHdl->fillEvent(*this,*pEvt,ientries,mu) ) 
+       while ( pHdl->fillEvent(*this,*pEvt,ientries,mu)  && 
+	       sigHdl->fillEvent(*sigData,*sigEvt,ientries,0)) 
 	 { ticker((Long64_t)pEvt->nVertices(),1000,ntot);
-	   analyze(*pEvt, PUsub); pEvt->reset(); }
+	   analyze(*pEvt, *sigEvt, PUsub); pEvt->reset(); sigEvt->reset();}
      }  
 
    //
@@ -106,13 +114,13 @@ bool MB_Py8::book()
 			    nPtBins,ptMin,ptMax);
 
 
-  int nJetMassBins(50);
+  int nJetMassBins(1000);
   double JetMassMin(0.);
-  double JetMassMax(250.);
+  double JetMassMax(10000.);
 
-  int nJetPtBins(100);
+  int nJetPtBins(1000);
   double JetPtMin(0.);
-  double JetPtMax(500.);
+  double JetPtMax(10000);
 
 
   //////// ------------- AK5 ----------------------------------------------
@@ -658,10 +666,13 @@ bool MB_Py8::write(const std::string& outName)
   return true;
 }
 
-bool MB_Py8::analyze(Event& pEvt, bool PUsub)
+bool MB_Py8::analyze(Event& pEvt, Event& sigEvt, bool PUsub)
 {
   // retrieve all particles
   std::vector<fastjet::PseudoJet> pPart = pEvt.pseudoJets(-1);
+  std::vector<fastjet::PseudoJet> sigPart = sigEvt.pseudoJets(-1);
+  pPart.insert(pPart.end(), sigPart.begin(), sigPart.end());
+
 
   // event distributions
   h_mu->Fill((double)pEvt.nVertices());
@@ -679,16 +690,16 @@ bool MB_Py8::analyze(Event& pEvt, bool PUsub)
 	}
     }
 
-  analyzeJetSubstructure(pEvt, pPart, fastjet::antikt_algorithm, 0.5, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::antikt_algorithm, 0.6, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::antikt_algorithm, 0.7, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::antikt_algorithm, 0.8, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::cambridge_algorithm, 0.8, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::cambridge_algorithm, 1.0, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::kt_algorithm, 0.5, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::kt_algorithm, 0.6, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::kt_algorithm, 0.7, PUsub);
-  analyzeJetSubstructure(pEvt, pPart, fastjet::kt_algorithm, 0.8, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::antikt_algorithm, 0.5, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::antikt_algorithm, 0.6, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::antikt_algorithm, 0.7, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::antikt_algorithm, 0.8, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::cambridge_algorithm, 0.8, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::cambridge_algorithm, 1.0, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::kt_algorithm, 0.5, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::kt_algorithm, 0.6, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::kt_algorithm, 0.7, PUsub);
+  analyzeJetSubstructure(pPart, fastjet::kt_algorithm, 0.8, PUsub);
 
   return true;
 }
@@ -696,7 +707,7 @@ bool MB_Py8::analyze(Event& pEvt, bool PUsub)
 
 
 
-void MB_Py8::analyzeJetSubstructure(Event& pEvt, std::vector<fastjet::PseudoJet> pPart, 
+void MB_Py8::analyzeJetSubstructure(std::vector<fastjet::PseudoJet> pPart, 
 				    fastjet::JetAlgorithm jetAlgo, double mJetRadius, 
 				    bool PUsub) {
 

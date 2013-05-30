@@ -1,6 +1,105 @@
-ALIAS.var	ALIAS.xtitle		ALIAS.xmin	ALIAS.xmax	ALIAS.ymin	ALIAS.ymax
-jetmass		Jet Mass (GeV)		0		500		0		100
-jetpt		Jet p_{T} (GeV)		0		800		0		100
-jetarea		Jet Area		0		5		0		500
-tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
-
+ALIAS.cm	ALIAS.pu	ALIAS.var	ALIAS.xtitle		ALIAS.xmin	ALIAS.xmax	ALIAS.ymin	ALIAS.ymax
+8TeV		30PU_noPUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_noPUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_noPUsub	jetarea		Jet Area		0		5		0		500
+8TeV		30PU_noPUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		30PU_noPUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_noPUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_noPUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		30PU_noPUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_noPUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_noPUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		30PU_noPUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_noPUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_noPUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		30PU_PUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_PUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_PUsub	jetarea		Jet Area		0		5		0		500
+8TeV		30PU_PUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		30PU_PUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_PUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_PUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		30PU_PUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_PUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_PUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		30PU_PUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		30PU_PUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		30PU_PUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		60PU_noPUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_noPUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_noPUsub	jetarea		Jet Area		0		5		0		500
+8TeV		60PU_noPUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		60PU_noPUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_noPUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_noPUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		60PU_noPUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_noPUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_noPUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		60PU_noPUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_noPUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_noPUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		60PU_PUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_PUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_PUsub	jetarea		Jet Area		0		5		0		500
+8TeV		60PU_PUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		60PU_PUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_PUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_PUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		60PU_PUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_PUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_PUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		60PU_PUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		60PU_PUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		60PU_PUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		100PU_noPUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_noPUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_noPUsub	jetarea		Jet Area		0		5		0		500
+8TeV		100PU_noPUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		100PU_noPUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_noPUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_noPUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		100PU_noPUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_noPUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_noPUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		100PU_noPUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_noPUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_noPUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		100PU_PUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_PUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_PUsub	jetarea		Jet Area		0		5		0		500
+8TeV		100PU_PUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		100PU_PUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_PUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_PUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		100PU_PUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_PUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_PUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		100PU_PUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		100PU_PUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		100PU_PUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		200PU_noPUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_noPUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_noPUsub	jetarea		Jet Area		0		5		0		500
+8TeV		200PU_noPUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		200PU_noPUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_noPUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_noPUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		200PU_noPUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_noPUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_noPUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		200PU_noPUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_noPUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_noPUsub	jetarea_ft	Jet Area		0		5		0		500
+8TeV		200PU_PUsub	jetmass		Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_PUsub	jetpt		Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_PUsub	jetarea		Jet Area		0		5		0		500
+8TeV		200PU_PUsub	tau2tau1	#tau_{2}/#tau_{1}	0		1		0		200
+8TeV		200PU_PUsub	jetmass_pr	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_PUsub	jetpt_pr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_PUsub	jetarea_pr	Jet Area		0		5		0		500
+8TeV		200PU_PUsub	jetmass_tr	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_PUsub	jetpt_tr	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_PUsub	jetarea_tr	Jet Area		0		5		0		500
+8TeV		200PU_PUsub	jetmass_ft	Jet Mass (GeV)		0		500		0		120
+8TeV		200PU_PUsub	jetpt_ft	Jet p_{T} (GeV)		0		800		0		120
+8TeV		200PU_PUsub	jetarea_ft	Jet Area		0		5		0		500
