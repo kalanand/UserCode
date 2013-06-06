@@ -1,0 +1,71 @@
+// -*- c++ -*-
+template<class H>
+void Zprime_Py8::writeHist(H* pHist)
+{ 
+  if ( pHist->GetEntries() != 0 )
+    {
+      printf("[Zprime_Py8::writeHist(%p)] - INFO - write histogram <%s/%s>\n",
+	     (void*)pHist,pHist->GetName(),pHist->GetTitle());
+      pHist->Write();
+    }
+  else
+    {
+      printf("[Zprime_Py8::writeHist(%p)] - WARN - histogram <%s/%s> empty.\n",
+	     (void*)pHist,pHist->GetName(),pHist->GetTitle());
+    }
+}
+
+template<class T>
+void Zprime_Py8::Loop(T& pileupServer,Int_t mu,Long64_t nevts,
+		      const std::string& outName,
+		      const std::string& pupName, bool PUsub)
+{
+  // incomplete setup
+  if ( fChain == 0 ) return;
+
+  // total number of events
+  Long64_t ntot(0);
+  if ( nevts > 0 ) { ntot = nevts; }
+  else { ntot = (Long64_t)fChain->GetEntries(); }
+ 
+  printf("[Zprime_Py8::Loop(...)] - INFO - analyze %i signal events (may be approximate!)\n",ntot);
+
+  book();
+  pileupServer.book();
+
+  Event* pSignalEvt = new Event(new Selectors::EtaRange(-6.,6.));
+  Event* pPileupEvt = new Event(new Selectors::EtaRange(-6.,6.));
+
+  DataHandler<Zprime_Py8>* pHdl = new DataHandler<Zprime_Py8>();
+
+  // create the combined event
+  Event* pMixedEvt = new Event(new Selectors::EtaRange(-6.,6.));
+
+  // loop signal events - do not touch these counters!!!
+  Long64_t iPlpEvts = 0;
+  Long64_t iSigEvts = 0;
+
+  while ( iSigEvts < ntot && 
+	  ( pileupServer.GetEvent(mu,iPlpEvts,*pPileupEvt,1) && 
+	    pHdl->fillEvent(*this,*pSignalEvt,iSigEvts,-1,0,Vertex::SIGNAL) ) )
+    {
+      // combine events
+      pMixedEvt->add(pSignalEvt->pseudoJets());
+      pMixedEvt->add(pPileupEvt->pseudoJets());
+      // analyze event
+      //  analyze(*pMixedEvt, PUsub);
+      analyze(*pSignalEvt, PUsub);
+
+
+      // analyze pileup event
+      // pileupServer.analyze(*pPileupEvt, PUsub);
+      // reset event stores
+      pSignalEvt->reset();
+      pPileupEvt->reset();
+      pMixedEvt->reset();
+    }
+    
+  if ( !outName.empty() && outName != "" ) { write(outName); }
+  //  if ( !pupName.empty() && pupName != "" ) { write(pupName); }
+	  
+}

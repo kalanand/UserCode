@@ -1,0 +1,10 @@
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00000.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00001.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00002.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00003.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00004.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00005.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00006.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00007.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00008.root
+/SharedDisk/BOOST2012/data.BOOST2012/softQCD_7TeV/float/00_09/pythia8_mb0_00009.root

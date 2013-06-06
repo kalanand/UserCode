@@ -1,3 +1,4 @@
+
 // -*- c++ -*-
 #ifndef EVENT_H
 #define EVENT_H
@@ -49,6 +50,11 @@ namespace Constants
 class Vertex
 {
 public:
+
+  enum InteractionType { PILEUP  = 0x01,
+			 SIGNAL  = 0x02,
+			 MIXED   = 0x04,
+			 UNKNOWN = 0x00 };
 
   enum Type { NEUTRAL = 0,
 	      CHARGED = 1, 
@@ -103,6 +109,8 @@ private:
   unsigned int m_nPartCharged;
 
   mutable OrderContext m_orderContext;
+
+  //  InteractionType m_interactionType;
 };
 
 inline void Vertex::setOrderContext(OrderContext oc)
@@ -117,8 +125,6 @@ inline bool Vertex::operator==(const Vertex& vtx) const
 inline bool Vertex::operator!=(const Vertex& vtx) const
 { return m_id != vtx.id(); }
 
-///
-
 class Event;
 
 class ParticleInfo : public fastjet::PseudoJet::UserInfoBase
@@ -126,16 +132,20 @@ class ParticleInfo : public fastjet::PseudoJet::UserInfoBase
 public:
 
   ParticleInfo();
-  ParticleInfo(int id,double charge,int vtx);
+  ParticleInfo(int id,double charge,int vtx,
+	       Vertex::InteractionType type=Vertex::UNKNOWN);
   ParticleInfo(const ParticleInfo& pInfo);
   virtual ~ParticleInfo();
 
 //   virtual void addParticleInfo(const fastjet::PseudoJet& pJet,
 // 			       int id,double charge,int vtx);
   
-  int id()           const;
-  double charge()    const;
-  int vertexId()     const;
+  int id()                                  const;
+  double charge()                           const;
+  int vertexId()                            const;
+  bool isPileup()                           const;
+  bool isSignal()                           const;
+  Vertex::InteractionType interactionType() const;
   //  int multiplicity() const;
 
   const bool vertex(const Event& thisEvt,Vertex& vertex) const; 
@@ -147,6 +157,9 @@ private:
   int    m_id;
   double m_charge;
   int    m_vertexId;
+
+  Vertex::InteractionType m_interactionType;
+
   //  int    m_multiplicity;
 
   //  std::vector<Vertex>    m_vertices;
@@ -224,31 +237,32 @@ private:
 struct Converters
 {
   template<class T>
-  static int convertToPJ(const T& dataSource,int index,int vtx,
+  static int convertToPJ(const T& dataSource,int index,int vtx,Vertex::InteractionType type,
 			 fastjet::PseudoJet& pJet)
   {
-    double p(dataSource.P0[index]);
-    double m(dataSource.Pm[index]);
-    double e(sqrt(p*p+m*m));
-    pJet.reset(dataSource.Px[index],
-	       dataSource.Py[index],
-	       dataSource.Pz[index],
-	       e);
+    // NOTE: P0 is _energy_!!!!
+    //   double e(dataSource.P0[index]);
+    //   double m(dataSource.Pm[index]);
+    //  double e(sqrt(p*p+m*m));
+    pJet.reset(fastjet::PtYPhiM(dataSource.Pt[index],
+				dataSource.Rap[index],
+				dataSource.Phi[index],
+				dataSource.Pm[index]));
     pJet.set_user_info(new ParticleInfo(dataSource.ID[index],
 					dataSource.Charge[index],
-					vtx));
+					vtx,type));
     return 1;
   }
 
   template<class T>
-  static int convertToPJ(const T& dataSource,int findex,int lindex,int vtx,
+  static int convertToPJ(const T& dataSource,int findex,int lindex,int vtx,Vertex::InteractionType type,
 			 std::vector<fastjet::PseudoJet>& vJet)
   {
     vJet.clear();
     for ( int i=findex;i<lindex;++i )
       {
 	vJet.push_back(fastjet::PseudoJet(0.,0.,0.,0.));
-	convertToPJ(dataSource,i,vtx,vJet.back());
+	convertToPJ(dataSource,i,vtx,type,vJet.back());
       }
     return (int)vJet.size();
   }
@@ -261,6 +275,8 @@ struct Features
 		       int vtx=-1);
   static bool nNeutral(const std::vector<fastjet::PseudoJet>& vJet,int& nJets,
 		       int vtx=-1);
+
+  static bool hasInteractionType(const fastjet::PseudoJet& pJet,Vertex::InteractionType type);
 };
 
 struct Utils
@@ -282,10 +298,68 @@ struct Utils
     std::vector<fastjet::PseudoJet>::const_iterator fJet(inJets.begin());
     std::vector<fastjet::PseudoJet>::const_iterator lJet(inJets.end());
     for ( ; fJet != lJet; ++fJet )
-      { outJets.push_back(*fJet);
-	if ( fJet->has_user_info<ParticleInfo>() )
+      { 
+	outJets.push_back(*fJet); 
+	if ( outJets.back().has_user_info<ParticleInfo>() )
 	  { outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
-	
+      }
+  }
+
+  static void copyPJ(const std::vector<fastjet::PseudoJet>& inJets,
+		     std::vector<fastjet::PseudoJet>&       outJets,
+		     bool charged)
+  {
+    std::vector<fastjet::PseudoJet>::const_iterator fJet(inJets.begin());
+    std::vector<fastjet::PseudoJet>::const_iterator lJet(inJets.end());
+    if ( charged )
+      {
+	for ( ; fJet != lJet; ++fJet )
+	  { if ( Features::isCharged(*fJet) )
+	      { outJets.push_back(*fJet); outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
+	  }
+      }
+    else
+      {
+	for ( ; fJet != lJet; ++fJet )
+	  { if ( !Features::isCharged(*fJet) )
+	      { outJets.push_back(*fJet); outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
+	  }
+      }
+  }
+
+  static void copyPJ(const std::vector<fastjet::PseudoJet>& inJets,
+		     std::vector<fastjet::PseudoJet>& outJets,
+		     Vertex::InteractionType type)
+  {
+    std::vector<fastjet::PseudoJet>::const_iterator fJet(inJets.begin());
+    std::vector<fastjet::PseudoJet>::const_iterator lJet(inJets.end());
+    for ( ; fJet != lJet; ++fJet )
+      {
+	if ( Features::hasInteractionType(*fJet,type) )
+	  { outJets.push_back(*fJet); outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
+      }
+  }
+
+  static void copyPJ(const std::vector<fastjet::PseudoJet>& inJets,
+		     std::vector<fastjet::PseudoJet>& outJets,
+		     Vertex::InteractionType type,
+		     bool charged)
+  {
+    std::vector<fastjet::PseudoJet>::const_iterator fJet(inJets.begin());
+    std::vector<fastjet::PseudoJet>::const_iterator lJet(inJets.end());
+    if ( charged )
+      {
+	for ( ; fJet != lJet; ++fJet )
+	  { if ( Features::isCharged(*fJet) && Features::hasInteractionType(*fJet,type) )
+	      { outJets.push_back(*fJet); outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
+	  }
+      }
+    else
+      {
+	for ( ; fJet != lJet; ++fJet )
+	  { if ( !Features::isCharged(*fJet) && Features::hasInteractionType(*fJet,type) )
+	      { outJets.push_back(*fJet); outJets.back().set_user_info(new ParticleInfo(fJet->user_info<ParticleInfo>())); }
+	  }
       }
   }
 
@@ -306,20 +380,21 @@ struct Utils
 template<class T>
 struct DataHandler
 {
-  bool fillEvent(T& dataSource,Event& event,long long& nPtr,int nVtx);
+  bool fillEvent(T& dataSource,Event& event,long long& nPtr,int nVtx,int vtxOffset=0,Vertex::InteractionType type=Vertex::UNKNOWN);
   int  getActVtx(int nVtx); 
 };
 
 class Event
 {
 public:
+
   Event(IFinalStateSelector* pSel=0);
   //  Event(const EventGridView& gv,IFinalStateSelector* pSel=0);
   virtual ~Event();
 
   virtual bool add(int ID, double charge, 
 		   double px,double py,double pz,double m,
-		   int vtx=0);
+		   int vtx=0,Vertex::InteractionType type=Vertex::UNKNOWN);
   virtual bool add(const fastjet::PseudoJet& pJet);
   virtual bool add(const std::vector<fastjet::PseudoJet>& vJet);
 
@@ -328,6 +403,8 @@ public:
 
   virtual std::vector<fastjet::PseudoJet> pseudoJets(int vtx=-1);
   virtual std::vector<fastjet::PseudoJet> pseudoJets(bool charged,int vtx=-1);
+  virtual std::vector<fastjet::PseudoJet> pseudoJets(Vertex::InteractionType type);
+  virtual std::vector<fastjet::PseudoJet> pseudoJets(bool charged,Vertex::InteractionType type);
 
   virtual bool empty(int vtx=-1) const; 
   virtual int  size(int vtx=-1)  const;
@@ -402,6 +479,9 @@ bool Features::isCharged(const fastjet::PseudoJet& pJet)
 { return pJet.has_user_info<ParticleInfo>() ?
     pJet.user_info<ParticleInfo>().charge() != 0. : false; }
 
+inline
+bool Features::hasInteractionType(const fastjet::PseudoJet& pJet,Vertex::InteractionType type)
+{ return pJet.has_user_info<ParticleInfo>() ? (pJet.user_info<ParticleInfo>().interactionType() & type) == type : false; }
 // ROOT CINT for static functions? FIXME!
 inline
 bool Features::nCharged(const std::vector<fastjet::PseudoJet>& vJet,int& nJets,

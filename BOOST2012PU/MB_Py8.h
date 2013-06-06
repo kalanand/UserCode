@@ -20,13 +20,9 @@
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TProfile.h>
-
+#include <map>
 #include <string>
 
-// Header file for the classes stored in the TTree if any.
-#include "fastjet/JetDefinition.hh"
-
-// Fixed size dimensions of array or collections stored in the TTree if any.
 
 class MB_Py8 {
 public :
@@ -73,15 +69,24 @@ public :
   virtual Int_t    GetEntry(Long64_t entry);
   virtual Long64_t LoadTree(Long64_t entry);
   virtual void     Init(TChain *tree);
+  template <typename T>
+  void SetBranchAddress( const char* name, const T* x, TBranch** ptr);
   virtual void     Loop(int mu=1,Long64_t nevts=-1,
-			const std::string& outName="",MB_Py8* sigData=0, bool PUsub=false);
+			const std::string& outName="",bool PUsub=false);
   virtual Bool_t   Notify();
   virtual void     Show(Long64_t entry = -1);
 
+  virtual bool     GetEvent(Int_t mu,Long64_t& ientry,
+			    Event& rEvent,Int_t vtxOffset=0);
 protected:
 
   Long64_t _procEvts;
   Long64_t _singleEvts;
+
+  DataHandler<MB_Py8>* _dataHandler;
+
+  std::map<TString, TH1*> m_HistNames1D;
+  std::map<TString, TProfile*> m_HistNames2D;
 
   //////////////////////
   // Event quantities //
@@ -101,247 +106,11 @@ protected:
   TH1D* h_eta_charged;
   TH1D* h_perp_charged;
 
-  TH1D* h_ak5_numJets;
-  TH1D* h_ak5_jetmass; 
-  TH1D* h_ak5_jetpt; 
-  TH1D* h_ak5_jetarea;	
-  TH1D* h_ak5_tau2tau1;	 
-  TH1D* h_ak5_tau3tau2;	 
-  TH1D* h_ak5_jetmass_tr; 
-  TH1D* h_ak5_jetpt_tr; 
-  TH1D* h_ak5_jetarea_tr; 		 
-  TH1D* h_ak5_jetmass_ft; 
-  TH1D* h_ak5_jetpt_ft; 
-  TH1D* h_ak5_jetarea_ft; 		 
-  TH1D* h_ak5_jetmass_pr;
-  TH1D* h_ak5_jetpt_pr; 
-  TH1D* h_ak5_jetarea_pr; 
-  TH1D* h_ak5_massdrop_pr;
-  TProfile* hprof_ak5_jetmass_jetpt;
-  TProfile* hprof_ak5_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ak5_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ak5_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ak5_tau2tau1_jetpt;
-
-
-  TH1D* h_ak6_numJets;
-  TH1D* h_ak6_jetmass; 
-  TH1D* h_ak6_jetpt; 
-  TH1D* h_ak6_jetarea;	
-  TH1D* h_ak6_tau2tau1;	 
-  TH1D* h_ak6_tau3tau2;	 			 
-  TH1D* h_ak6_jetmass_tr; 
-  TH1D* h_ak6_jetpt_tr; 
-  TH1D* h_ak6_jetarea_tr; 		 
-  TH1D* h_ak6_jetmass_ft; 
-  TH1D* h_ak6_jetpt_ft; 
-  TH1D* h_ak6_jetarea_ft; 		 
-  TH1D* h_ak6_jetmass_pr;
-  TH1D* h_ak6_jetpt_pr; 
-  TH1D* h_ak6_jetarea_pr; 
-  TH1D* h_ak6_massdrop_pr;
-  TProfile* hprof_ak6_jetmass_jetpt;
-  TProfile* hprof_ak6_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ak6_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ak6_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ak6_tau2tau1_jetpt;
-
-
-  TH1D* h_ak7_numJets;
-  TH1D* h_ak7_jetmass; 
-  TH1D* h_ak7_jetpt; 
-  TH1D* h_ak7_jetarea;	
-  TH1D* h_ak7_tau2tau1;	 
-  TH1D* h_ak7_tau3tau2;	 			 
-  TH1D* h_ak7_jetmass_tr; 
-  TH1D* h_ak7_jetpt_tr; 
-  TH1D* h_ak7_jetarea_tr; 		 
-  TH1D* h_ak7_jetmass_ft; 
-  TH1D* h_ak7_jetpt_ft; 
-  TH1D* h_ak7_jetarea_ft; 		 
-  TH1D* h_ak7_jetmass_pr;
-  TH1D* h_ak7_jetpt_pr; 
-  TH1D* h_ak7_jetarea_pr; 
-  TH1D* h_ak7_massdrop_pr;
-  TProfile* hprof_ak7_jetmass_jetpt;
-  TProfile* hprof_ak7_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ak7_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ak7_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ak7_tau2tau1_jetpt;
-
-
-  TH1D* h_ak8_numJets;
-  TH1D* h_ak8_jetmass; 
-  TH1D* h_ak8_jetpt; 
-  TH1D* h_ak8_jetarea;	
-  TH1D* h_ak8_tau2tau1;	 
-  TH1D* h_ak8_tau3tau2;	 			 
-  TH1D* h_ak8_jetmass_tr; 
-  TH1D* h_ak8_jetpt_tr; 
-  TH1D* h_ak8_jetarea_tr; 		 
-  TH1D* h_ak8_jetmass_ft; 
-  TH1D* h_ak8_jetpt_ft; 
-  TH1D* h_ak8_jetarea_ft; 		 
-  TH1D* h_ak8_jetmass_pr;
-  TH1D* h_ak8_jetpt_pr; 
-  TH1D* h_ak8_jetarea_pr; 
-  TH1D* h_ak8_massdrop_pr;
-  TProfile* hprof_ak8_jetmass_jetpt;
-  TProfile* hprof_ak8_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ak8_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ak8_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ak8_tau2tau1_jetpt;
- 
-
-  TH1D* h_ca8_numJets;
-  TH1D* h_ca8_jetmass; 
-  TH1D* h_ca8_jetpt; 
-  TH1D* h_ca8_jetarea;	
-  TH1D* h_ca8_tau2tau1;	 
-  TH1D* h_ca8_tau3tau2;	 			 
-  TH1D* h_ca8_jetmass_tr; 
-  TH1D* h_ca8_jetpt_tr; 
-  TH1D* h_ca8_jetarea_tr; 		 
-  TH1D* h_ca8_jetmass_ft; 
-  TH1D* h_ca8_jetpt_ft; 
-  TH1D* h_ca8_jetarea_ft; 		 
-  TH1D* h_ca8_jetmass_pr;
-  TH1D* h_ca8_jetpt_pr; 
-  TH1D* h_ca8_jetarea_pr; 
-  TH1D* h_ca8_massdrop_pr;
-  TProfile* hprof_ca8_jetmass_jetpt;
-  TProfile* hprof_ca8_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ca8_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ca8_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ca8_tau2tau1_jetpt;
-
-
-  TH1D* h_ca10_numJets;
-  TH1D* h_ca10_jetmass; 
-  TH1D* h_ca10_jetpt; 
-  TH1D* h_ca10_jetarea;	
-  TH1D* h_ca10_tau2tau1;	 
-  TH1D* h_ca10_tau3tau2;	 			 
-  TH1D* h_ca10_jetmass_tr; 
-  TH1D* h_ca10_jetpt_tr; 
-  TH1D* h_ca10_jetarea_tr; 		 
-  TH1D* h_ca10_jetmass_ft; 
-  TH1D* h_ca10_jetpt_ft; 
-  TH1D* h_ca10_jetarea_ft; 		 
-  TH1D* h_ca10_jetmass_pr;
-  TH1D* h_ca10_jetpt_pr; 
-  TH1D* h_ca10_jetarea_pr; 
-  TH1D* h_ca10_massdrop_pr;
-  TProfile* hprof_ca10_jetmass_jetpt;
-  TProfile* hprof_ca10_jetmass_tr_jetpt_tr;
-  TProfile* hprof_ca10_jetmass_ft_jetpt_ft;
-  TProfile* hprof_ca10_jetmass_pr_jetpt_pr;
-  TProfile* hprof_ca10_tau2tau1_jetpt;
-
-
-
-  TH1D* h_kt5_numJets;
-  TH1D* h_kt5_jetmass; 
-  TH1D* h_kt5_jetpt; 
-  TH1D* h_kt5_jetarea;	
-  TH1D* h_kt5_tau2tau1;	 
-  TH1D* h_kt5_tau3tau2;	 
-  TH1D* h_kt5_jetmass_tr; 
-  TH1D* h_kt5_jetpt_tr; 
-  TH1D* h_kt5_jetarea_tr; 		 
-  TH1D* h_kt5_jetmass_ft; 
-  TH1D* h_kt5_jetpt_ft; 
-  TH1D* h_kt5_jetarea_ft; 		 
-  TH1D* h_kt5_jetmass_pr;
-  TH1D* h_kt5_jetpt_pr; 
-  TH1D* h_kt5_jetarea_pr; 
-  TH1D* h_kt5_massdrop_pr;
-  TProfile* hprof_kt5_jetmass_jetpt;
-  TProfile* hprof_kt5_jetmass_tr_jetpt_tr;
-  TProfile* hprof_kt5_jetmass_ft_jetpt_ft;
-  TProfile* hprof_kt5_jetmass_pr_jetpt_pr;
-  TProfile* hprof_kt5_tau2tau1_jetpt;
-
-
-  TH1D* h_kt6_numJets;
-  TH1D* h_kt6_jetmass; 
-  TH1D* h_kt6_jetpt; 
-  TH1D* h_kt6_jetarea;	
-  TH1D* h_kt6_tau2tau1;	 
-  TH1D* h_kt6_tau3tau2;	 			 
-  TH1D* h_kt6_jetmass_tr; 
-  TH1D* h_kt6_jetpt_tr; 
-  TH1D* h_kt6_jetarea_tr; 		 
-  TH1D* h_kt6_jetmass_ft; 
-  TH1D* h_kt6_jetpt_ft; 
-  TH1D* h_kt6_jetarea_ft; 		 
-  TH1D* h_kt6_jetmass_pr;
-  TH1D* h_kt6_jetpt_pr; 
-  TH1D* h_kt6_jetarea_pr; 
-  TH1D* h_kt6_massdrop_pr;
-  TProfile* hprof_kt6_jetmass_jetpt;
-  TProfile* hprof_kt6_jetmass_tr_jetpt_tr;
-  TProfile* hprof_kt6_jetmass_ft_jetpt_ft;
-  TProfile* hprof_kt6_jetmass_pr_jetpt_pr;
-  TProfile* hprof_kt6_tau2tau1_jetpt;
-
-
-  TH1D* h_kt7_numJets;
-  TH1D* h_kt7_jetmass; 
-  TH1D* h_kt7_jetpt; 
-  TH1D* h_kt7_jetarea;	
-  TH1D* h_kt7_tau2tau1;	 
-  TH1D* h_kt7_tau3tau2;	 			 
-  TH1D* h_kt7_jetmass_tr; 
-  TH1D* h_kt7_jetpt_tr; 
-  TH1D* h_kt7_jetarea_tr; 		 
-  TH1D* h_kt7_jetmass_ft; 
-  TH1D* h_kt7_jetpt_ft; 
-  TH1D* h_kt7_jetarea_ft; 		 
-  TH1D* h_kt7_jetmass_pr;
-  TH1D* h_kt7_jetpt_pr; 
-  TH1D* h_kt7_jetarea_pr; 
-  TH1D* h_kt7_massdrop_pr;
-  TProfile* hprof_kt7_jetmass_jetpt;
-  TProfile* hprof_kt7_jetmass_tr_jetpt_tr;
-  TProfile* hprof_kt7_jetmass_ft_jetpt_ft;
-  TProfile* hprof_kt7_jetmass_pr_jetpt_pr;
-  TProfile* hprof_kt7_tau2tau1_jetpt;
-
-
-  TH1D* h_kt8_numJets;
-  TH1D* h_kt8_jetmass; 
-  TH1D* h_kt8_jetpt; 
-  TH1D* h_kt8_jetarea;	
-  TH1D* h_kt8_tau2tau1;	 
-  TH1D* h_kt8_tau3tau2;	 			 
-  TH1D* h_kt8_jetmass_tr; 
-  TH1D* h_kt8_jetpt_tr; 
-  TH1D* h_kt8_jetarea_tr; 		 
-  TH1D* h_kt8_jetmass_ft; 
-  TH1D* h_kt8_jetpt_ft; 
-  TH1D* h_kt8_jetarea_ft; 		 
-  TH1D* h_kt8_jetmass_pr;
-  TH1D* h_kt8_jetpt_pr; 
-  TH1D* h_kt8_jetarea_pr; 
-  TH1D* h_kt8_massdrop_pr;
-  TProfile* hprof_kt8_jetmass_jetpt;
-  TProfile* hprof_kt8_jetmass_tr_jetpt_tr;
-  TProfile* hprof_kt8_jetmass_ft_jetpt_ft;
-  TProfile* hprof_kt8_jetmass_pr_jetpt_pr;
-  TProfile* hprof_kt8_tau2tau1_jetpt;
- 
+public:
 
   bool book();
   bool write(const std::string& outName="");
-  bool analyze(Event& pEvt, Event& sigEvt, bool PUsub);
-  void analyzeJetSubstructure(std::vector<fastjet::PseudoJet> pPart, 
-			      fastjet::JetAlgorithm jetAlgo, 
-			      double mJetRadius, bool PUsub);
-  
-  float massDrop(fastjet::PseudoJet& transformedJet);  
-  void Nsubjettiness(fastjet::PseudoJet& jet, double mJetRadius, float& tau2tau1, float& tau3tau2);
-
+  bool analyze(Event& pEvt, bool PUsub);
   bool ticker(Long64_t nVtx,Long64_t nfreq,Long64_t nevts);
 
   template<class H>
@@ -385,6 +154,7 @@ MB_Py8::MB_Py8(int mu,TChain *tree)
   : fChain(0)
   , _procEvts(0)
   , _singleEvts(0)
+  , _dataHandler(new DataHandler<MB_Py8>())
 {
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
@@ -455,8 +225,14 @@ void MB_Py8::Init(TChain *tree)
    fChain->SetBranchAddress("Rap", Rap, &b_Rap);
    fChain->SetBranchAddress("Phi", Phi, &b_Phi);
    fChain->SetBranchAddress("Eta", Eta, &b_Eta);
+
    Notify();
 }
+
+
+
+
+
 
 Bool_t MB_Py8::Notify()
 {

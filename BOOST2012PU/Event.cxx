@@ -118,13 +118,15 @@ ParticleInfo::ParticleInfo()
   , m_id(-9999)
   , m_charge(0.)
   , m_vertexId(-1)
+  , m_interactionType(Vertex::UNKNOWN)
 { }
 
-ParticleInfo::ParticleInfo(int id,double charge,int vtx)
+ParticleInfo::ParticleInfo(int id,double charge,int vtx,Vertex::InteractionType type)
   : fastjet::PseudoJet::UserInfoBase()
   , m_id(id)
   , m_charge(charge)
   , m_vertexId(vtx)
+  , m_interactionType(type)
 { }
 
 ParticleInfo::ParticleInfo(const ParticleInfo& pInfo)
@@ -132,6 +134,7 @@ ParticleInfo::ParticleInfo(const ParticleInfo& pInfo)
   , m_id(pInfo.m_id)
   , m_charge(pInfo.m_charge)
   , m_vertexId(pInfo.m_vertexId)
+  , m_interactionType(pInfo.m_interactionType)
 { }
 
 ParticleInfo::~ParticleInfo()
@@ -159,6 +162,12 @@ ParticleInfo::~ParticleInfo()
 int ParticleInfo::id() const { return m_id; }
 double ParticleInfo::charge() const { return m_charge; }
 int ParticleInfo::vertexId() const { return m_vertexId; }
+Vertex::InteractionType ParticleInfo::interactionType() const 
+{ return m_interactionType; }
+bool ParticleInfo::isSignal() const 
+{ return ( m_interactionType & Vertex::SIGNAL ) == Vertex::SIGNAL; }
+bool ParticleInfo::isPileup() const 
+{ return ( m_interactionType & Vertex::PILEUP ) == Vertex::PILEUP; }
 
 const bool ParticleInfo::vertex(const Event& thisEvt,Vertex& vertex) const
 {
@@ -190,12 +199,12 @@ Event::~Event()
 
 bool Event::add(int id,double charge,
 		double px,double py,double pz,double m,
-		int vtx)
+		int vtx,Vertex::InteractionType type)
 {
   double e(sqrt(px*px+py*py+pz*pz+m*m));
   // create PseudoJet
   fastjet::PseudoJet pJet(px,py,pz,e); 
-  pJet.set_user_info(new ParticleInfo(id,charge,vtx));
+  pJet.set_user_info(new ParticleInfo(id,charge,vtx,type));
   return this->add(pJet);
 }
 
@@ -329,62 +338,39 @@ std::vector<fastjet::PseudoJet> Event::pseudoJets(int vtx)
   return pVec;
 }
 
+std::vector<fastjet::PseudoJet> Event::pseudoJets(Vertex::InteractionType type)
+{
+  std::vector<fastjet::PseudoJet> pVec;
+  std::vector<std::vector<fastjet::PseudoJet> >::const_iterator fVtx(m_particles.begin());
+  std::vector<std::vector<fastjet::PseudoJet> >::const_iterator lVtx(m_particles.end());
+  for ( ; fVtx != lVtx; ++fVtx ) { Utils::copyPJ(*fVtx,pVec,type); }
+  return pVec;
+}
+
 std::vector<fastjet::PseudoJet> Event::pseudoJets(bool charged,int vtx)
 {
   std::vector<fastjet::PseudoJet> pVec;
+  // check all vertices
   if ( vtx < 0 )
     {
-      std::vector<std::vector<fastjet::PseudoJet> >::const_iterator 
-	fVtx(m_particles.begin());
-      std::vector<std::vector<fastjet::PseudoJet> >::const_iterator 
-	lVtx(m_particles.end());
+      std::vector<std::vector<fastjet::PseudoJet> >::const_iterator fVtx(m_particles.begin());
+      std::vector<std::vector<fastjet::PseudoJet> >::const_iterator lVtx(m_particles.end());
       for ( ; fVtx != lVtx; ++fVtx )
-	{
-	  std::vector<fastjet::PseudoJet>::const_iterator fJet(fVtx->begin());
-	  std::vector<fastjet::PseudoJet>::const_iterator lJet(fVtx->end());
-	  for ( ; fJet != lJet; ++fJet )
-	    {
-	      if ( fJet->has_user_info<ParticleInfo>() )
-		{
-		  // 
-		  if ( charged && Features::isCharged(*fJet) )
-		    {
-		      pVec.push_back(fastjet::PseudoJet());
-		      pVec.back().reset(*fJet);
-		    } // charged particle
-		  else if ( !charged )
-		    { 
-		      pVec.push_back(fastjet::PseudoJet());
-		      pVec.back().reset(*fJet);
-		    } // all particles
-		} // has valid user info
-	    } // loop on jets for given vertex
-	} // loop on all vertices
+	{ Utils::copyPJ(*fVtx,pVec,charged); }  // loop on all vertices
     } // all vertices request
+  // check specific vertex
   else if ( vtx < m_particles.size() )
-    {
-      std::vector<fastjet::PseudoJet>::const_iterator 
-	fJet(m_particles.at(vtx).begin());
-      std::vector<fastjet::PseudoJet>::const_iterator 
-	lJet(m_particles.at(vtx).end());
-      for ( ; fJet != lJet; ++fJet )
-	{
-	  if ( fJet->has_user_info<ParticleInfo>() )
-	    {
-	      //
-	      if ( charged && Features::isCharged(*fJet) )
-		{
-		  pVec.push_back(fastjet::PseudoJet());
-		  pVec.back().reset(*fJet);
-		} // charged particle
-	      else if ( !charged )
-		{ 
-		  pVec.push_back(fastjet::PseudoJet());
-		  pVec.back().reset(*fJet);
-		} // all particles
-	    } // valid info
-	} // loop on jets at given vertex
-    } // valid vertex
+    { Utils::copyPJ(m_particles.at(vtx),pVec,charged); }
+
+  return pVec;
+}
+
+std::vector<fastjet::PseudoJet> Event::pseudoJets(bool charged,Vertex::InteractionType type)
+{
+  std::vector<fastjet::PseudoJet> pVec;
+  std::vector<std::vector<fastjet::PseudoJet> >::const_iterator fVtx(m_particles.begin());
+  std::vector<std::vector<fastjet::PseudoJet> >::const_iterator lVtx(m_particles.end());
+  for ( ; fVtx != lVtx; ++fVtx ) { Utils::copyPJ(*fVtx,pVec,type,charged); }
   return pVec;
 }
 
@@ -399,10 +385,24 @@ const Vertex& Event::vertex(int id) const
     }
   else
     {
-      Utils::sortVtx(m_vertices,Vertex::PTSUM2);
-      return m_vertices.front();
+      std::vector<Vertex>::const_iterator fVtx(m_vertices.begin());
+      std::vector<Vertex>::const_iterator lVtx(m_vertices.end());
+      double ptm(0.);
+      size_t idx(0);
+      for ( ; fVtx != lVtx; ++fVtx )
+	{ if ( fVtx->ptSum2(Vertex::CHARGED) > ptm ) 
+	    { ptm = fVtx->ptSum2(Vertex::CHARGED); 
+	      idx = fVtx - m_vertices.begin(); }
+	}
+      return m_vertices.at(idx);
     }
 }
+//       std::vector<Vertex> orderedVtx;
+//       std::copy(m_vertices.begin(),m_vertices.end(),std::back_insert_iterator<std::vector<Vertex>>(orderedVtx));
+// //       Utils::sortVtx(orderedVtx,Vertex::PTSUM2);
+// //       return orderedVtx.front();
+//     }
+// }
 
  
 // const EventGridView* Event::eventGridView(bool charged)
