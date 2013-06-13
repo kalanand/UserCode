@@ -417,14 +417,8 @@ fillHist1D(m_Hist1D, numJets, (int) (out_jets.size()) );
      dy = fabs(out_jets.at(0).rapidity() - out_jets.at(1).rapidity());
    if(dy>1.0) break;
                 
-   double value = out_jets.at(j).m();
-
-   std::cout << " -------------------------------------- mass = " << value << std::endl;
-   fillHist1D(m_Hist1D, jetmass, value);
-   value = out_jets.at(j).pt();
-   std::cout << " -------------------------------------- pt = " << value << std::endl;
-   fillHist1D(m_Hist1D, jetpt, value);
-
+   fillHist1D(m_Hist1D, jetmass, out_jets.at(j).m());
+   fillHist1D(m_Hist1D, jetpt, out_jets.at(j).pt());
 
 //     jeteta[j] = out_jets.at(j).eta();
 //     jetphi[j] = out_jets.at(j).phi();
@@ -467,6 +461,7 @@ fillHist1D(m_Hist1D, numJets, (int) (out_jets.size()) );
 	fillHist1D(m_Hist1D, jetmass_pr, transformedJet.m());
 	fillHist1D(m_Hist1D, jetpt_pr, transformedJet.pt());
 	fillHist1D(m_Hist1D, jetarea_pr, transformedJet.area());
+	fillHist1D(m_Hist1D, massdrop_pr, massDrop(transformedJet));
 	fillHist2D(m_Hist2D, jetmass_pr_jetpt_pr, transformedJet.pt(), transformedJet.m());
       }                
       else{ std::cout << "error in number of transformers" << std::endl;}                    

@@ -49,12 +49,13 @@ void Zprime_Py8::Loop(T& pileupServer,Int_t mu,Long64_t nevts,
 	  ( pileupServer.GetEvent(mu,iPlpEvts,*pPileupEvt,1) && 
 	    pHdl->fillEvent(*this,*pSignalEvt,iSigEvts,-1,0,Vertex::SIGNAL) ) )
     {
+      iSigEvts++;
       // combine events
       pMixedEvt->add(pSignalEvt->pseudoJets());
       pMixedEvt->add(pPileupEvt->pseudoJets());
       // analyze event
-      //  analyze(*pMixedEvt, PUsub);
-      analyze(*pSignalEvt, PUsub);
+      analyze(*pMixedEvt, PUsub);
+      // analyze(*pSignalEvt, PUsub);
 
 
       // analyze pileup event

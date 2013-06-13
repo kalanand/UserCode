@@ -205,6 +205,7 @@ bool Zprime_Py8::analyze(Event& pEvt, bool PUsub)
   analyzeJetSubstructure(pEvt, allParts, fastjet::antikt_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "all_");
 
 
+  /*
   analyzeJetSubstructure(pEvt, allParts, fastjet::cambridge_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "all_");
   analyzeJetSubstructure(pEvt, allParts, fastjet::cambridge_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "all_");
 
@@ -213,8 +214,8 @@ bool Zprime_Py8::analyze(Event& pEvt, bool PUsub)
   analyzeJetSubstructure(pEvt, allParts, fastjet::kt_algorithm, 0.7, PUsub, m_HistNames1D, m_HistNames2D, "all_");
   analyzeJetSubstructure(pEvt, allParts, fastjet::kt_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "all_");
   analyzeJetSubstructure(pEvt, allParts, fastjet::kt_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "all_");
+   */
 
- 
   ////
   analyzeJetSubstructure(pEvt, sigParts, fastjet::antikt_algorithm, 0.5, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
   analyzeJetSubstructure(pEvt, sigParts, fastjet::antikt_algorithm, 0.6, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
@@ -222,7 +223,7 @@ bool Zprime_Py8::analyze(Event& pEvt, bool PUsub)
   analyzeJetSubstructure(pEvt, sigParts, fastjet::antikt_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
   analyzeJetSubstructure(pEvt, sigParts, fastjet::antikt_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
 
-
+  /*
   analyzeJetSubstructure(pEvt, sigParts, fastjet::cambridge_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
   analyzeJetSubstructure(pEvt, sigParts, fastjet::cambridge_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
 
@@ -232,8 +233,11 @@ bool Zprime_Py8::analyze(Event& pEvt, bool PUsub)
   analyzeJetSubstructure(pEvt, sigParts, fastjet::kt_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
   analyzeJetSubstructure(pEvt, sigParts, fastjet::kt_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "signal_");
 
+  */
 
 
+
+  /*
   ////
   analyzeJetSubstructure(pEvt, pupParts, fastjet::antikt_algorithm, 0.5, PUsub, m_HistNames1D, m_HistNames2D, "pu_");
   analyzeJetSubstructure(pEvt, pupParts, fastjet::antikt_algorithm, 0.6, PUsub, m_HistNames1D, m_HistNames2D, "pu_");
@@ -251,7 +255,7 @@ bool Zprime_Py8::analyze(Event& pEvt, bool PUsub)
   analyzeJetSubstructure(pEvt, pupParts, fastjet::kt_algorithm, 0.8, PUsub, m_HistNames1D, m_HistNames2D, "pu_");
   analyzeJetSubstructure(pEvt, pupParts, fastjet::kt_algorithm, 1.0, PUsub, m_HistNames1D, m_HistNames2D, "pu_");
 
-
+  */
 
   return true;
 }

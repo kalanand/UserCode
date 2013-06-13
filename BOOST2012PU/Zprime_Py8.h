@@ -34,16 +34,16 @@ public :
   Int_t           Nparticles;
   Int_t           ID[100000];   //[Nentry]
   Int_t           Stat[100000];   //[Nentry]
-  Double_t        Charge[100000];   //[Nentry]
-  Double_t        Px[100000];   //[Nentry]
-  Double_t        Py[100000];   //[Nentry]
-  Double_t        Pz[100000];   //[Nentry]
-  Double_t        P0[100000];   //[Nentry]
-  Double_t        Pm[100000];   //[Nentry]
-  Double_t        Pt[100000];   //[Nentry]
-  Double_t        Rap[100000];   //[Nentry]
-  Double_t        Phi[100000];   //[Nentry]
-  Double_t        Eta[100000];   //[Nentry]
+  Float_t        Charge[100000];   //[Nentry]
+  Float_t        Px[100000];   //[Nentry]
+  Float_t        Py[100000];   //[Nentry]
+  Float_t        Pz[100000];   //[Nentry]
+  Float_t        P0[100000];   //[Nentry]
+  Float_t        Pm[100000];   //[Nentry]
+  Float_t        Pt[100000];   //[Nentry]
+  Float_t        Rap[100000];   //[Nentry]
+  Float_t        Phi[100000];   //[Nentry]
+  Float_t        Eta[100000];   //[Nentry]
 
   // List of branches
   TBranch        *b_Nentry;   //!
