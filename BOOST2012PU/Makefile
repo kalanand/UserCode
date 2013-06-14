@@ -40,7 +40,7 @@ anal02:
 	-lgcc \
 	$(shell root-config --cflags) \
 	$(shell fastjet-install/bin/fastjet-config --cxxflags) \
-	anal02.C Zprime_Py8.C MB_Py8.C Event.cxx RandomEngine.cxx  Selectors.cxx SubtractorWithMass.cc -o anal02.exe \
+	anal02.C Zprime_Py8.C MB_Py8.C Event.cxx RandomEngine.cxx  Selectors.cxx SubtractorWithMass.cc ExampleShapes.cc -o anal02.exe \
 	$(shell  root-config --libs) $(shell fastjet-install/bin/fastjet-config --libs)
 
 anal02lib:

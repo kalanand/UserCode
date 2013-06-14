@@ -8,11 +8,11 @@ void Zprime_Py8::writeHist(H* pHist)
 	     (void*)pHist,pHist->GetName(),pHist->GetTitle());
       pHist->Write();
     }
-  else
-    {
-      printf("[Zprime_Py8::writeHist(%p)] - WARN - histogram <%s/%s> empty.\n",
-	     (void*)pHist,pHist->GetName(),pHist->GetTitle());
-    }
+//   else
+//     {
+//       printf("[Zprime_Py8::writeHist(%p)] - WARN - histogram <%s/%s> empty.\n",
+// 	     (void*)pHist,pHist->GetName(),pHist->GetTitle());
+//     }
 }
 
 template<class T>

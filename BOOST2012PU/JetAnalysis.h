@@ -32,9 +32,59 @@
 #include<fastjet/contrib/Nsubjettiness.hh>
 #include<fastjet/contrib/Njettiness.hh>
 #include<fastjet/contrib/NjettinessPlugin.hh>
+#include<fastjet/contrib/ShapeWithComponents.hh>
+#include "ExampleShapes.hh"
+#include "SubtractorWithMass.hh"
 
 
 namespace {
+
+// an example of a ShapeWithComponents
+//
+// We define tau_N/tau_{N-1} as the explicit ratio of (the numerator
+// of) tau_N and (the numerator of) tau_{N-1}. When this shape will be
+// subtracted, tau_N and tau_{N-1} will be subtracted independently
+class NSubjettinessRatio : public fastjet::contrib::ShapeWithComponents{
+public:
+  NSubjettinessRatio(int N) : _N(N){
+    assert(_N>1);
+  }
+
+  // a (rather loosy) description
+  virtual std::string description() const{ return "N-subjettiness ratio from components";}
+
+
+  /// returns the number of components 
+  virtual unsigned int n_components() const { return 2;}
+
+  /// computes individually tau_N and tau_{N-1}
+  virtual std::vector<double> components(const fastjet::PseudoJet &jet) const{
+    std::vector<double> comp(n_components());
+    comp[0] = fastjet::contrib::NSubjettinessNumerator(_N)(jet);
+    comp[1] = fastjet::contrib::NSubjettinessNumerator(_N-1)(jet);
+    return comp;
+  }
+
+  /// given the components, determine the result of the event shape
+  virtual double result_from_components(const std::vector <double> &components) const{
+    return components[0]/components[1];
+  }
+
+  /// since the components are shapes with artition, take the
+  /// advantage of it.
+  ///
+  /// This is done as follows (and is not necessary if no partition is
+  /// needed) : the overloaded method below return a shape that
+  /// computes the ith component.
+  virtual FunctionOfPseudoJet<double> * component_shape(unsigned int index) const{
+    return new fastjet::contrib::NSubjettinessNumerator(_N-index);
+  }
+
+protected:
+  const int _N;
+};
+
+
 
 void createHistogramsOneAlgo(std::string algo, 
 			     std::map<TString, TH1*>& m_Hist1D, 
@@ -257,9 +307,6 @@ void GetNsubjettiness(fastjet::PseudoJet& jet,
 
   tau2tau1 = tau2/tau1;
   tau3tau2 = tau3/tau2;
-
-/*   tau2tau1 = 1.; */
-/*   tau3tau2 = 1.; */
 }
 
 
@@ -385,14 +432,23 @@ void analyzeJetSubstructure(Event& pEvt,
   bge_rho.set_rescaling_class(&rescaling);
   fastjet::Subtractor subtractor(&bge_rho);
   std::vector<fastjet::PseudoJet> out_jets = sorted_by_pt(thisClustering.inclusive_jets(jetPtMin));
-  if(PUsub) out_jets = subtractor(out_jets);
+  std::vector<fastjet::PseudoJet> orig_jets(out_jets);
+
+  // shape subtractor for Nsubjettiness and mass 
+  fastjet::contrib::GenericSubtractor gen_sub(&bge_rho);
+  fastjet::SubtractorWithMass mass_sub(&bge_rho);
+  //if(PUsub) out_jets = subtractor(out_jets);
 
 
   // define groomers
   fastjet::Filter trimmer( fastjet::Filter(fastjet::JetDefinition(fastjet::kt_algorithm, 0.2), fastjet::SelectorPtFractionMin(0.03)));
   fastjet::Filter filter( fastjet::Filter(fastjet::JetDefinition(fastjet::cambridge_algorithm, 0.3), fastjet::SelectorNHardest(3)));
   fastjet::Pruner pruner(fastjet::cambridge_algorithm, 0.1, 0.5);
-    
+  trimmer.set_subtractor(&subtractor);
+  filter.set_subtractor(&subtractor);
+  // pruner.set_subtractor(&subtractor);
+
+
   std::vector<fastjet::Transformer const *> transformers;
   transformers.push_back(&trimmer);
   transformers.push_back(&filter);
@@ -404,37 +460,53 @@ void analyzeJetSubstructure(Event& pEvt,
   double R0 = mJetRadius; // Characteristic jet radius for normalization	      
   double Rcut = mJetRadius; // maximum R particles can be from axis to be included in jet	      
     
-//numJets->Fill( (int) (out_jets.size()));
-fillHist1D(m_Hist1D, numJets, (int) (out_jets.size()) );
+  //numJets->Fill( (int) (out_jets.size()));
+  fillHist1D(m_Hist1D, numJets, (int) (out_jets.size()) );
 
- const int NUM_JET_MAX = 2;
+  const int NUM_JET_MAX = 2;
 
- for (unsigned j = 0; j < out_jets.size() && int(j)<NUM_JET_MAX; j++) {
+  for (unsigned j = 0; j < out_jets.size() && int(j)<NUM_JET_MAX; j++) {
 
-   double dy = 10.0;
+    if(((int) (out_jets.size()))<2) break;
 
-   if( ((int) (out_jets.size()))>1) 
-     dy = fabs(out_jets.at(0).rapidity() - out_jets.at(1).rapidity());
-   if(dy>1.0) break;
+    fastjet::PseudoJet jet0 = out_jets.at(0);
+    fastjet::PseudoJet jet1 = out_jets.at(1);
+    fastjet::PseudoJet jetj = out_jets.at(j);    
+    if(PUsub) {
+      jet0 = mass_sub.result(jet0);
+      jet1 = mass_sub.result(jet1);
+      jetj = mass_sub.result(jetj);
+    }
+
+    double dy = fabs(jet0.rapidity() - jet1.rapidity());
+    if(dy>1.0) break;
                 
-   fillHist1D(m_Hist1D, jetmass, out_jets.at(j).m());
-   fillHist1D(m_Hist1D, jetpt, out_jets.at(j).pt());
 
-//     jeteta[j] = out_jets.at(j).eta();
-//     jetphi[j] = out_jets.at(j).phi();
-//     jete[j]   = out_jets.at(j).energy();
+    fillHist1D(m_Hist1D, jetmass, jetj.m());
+    fillHist1D(m_Hist1D, jetpt, jetj.pt());
+
+    //     jeteta[j] = jetj.eta();
+    //     jetphi[j] = jetj.phi();
+    //     jete[j]   = jetj.energy();
  
-    fillHist1D(m_Hist1D, jetarea, out_jets.at(j).area());
+    fillHist1D(m_Hist1D, jetarea, jetj.area());
+    NSubjettinessRatio tau21(2);
+    NSubjettinessRatio tau32(3);
+    float m_tau2tau1 = tau21(jetj); 
+    float m_tau3tau2 = tau32(jetj); 
+    fastjet::PseudoJet orig_jetj = orig_jets.at(j);   
 
+/*     if(PUsub) { */
+/*       m_tau2tau1 = gen_sub(tau21, orig_jetj);  */
+/*       m_tau3tau2 = gen_sub(tau32, orig_jetj);  */
+/*     } */
 
-    float m_tau2tau1 = -1.0; 
-    float m_tau3tau2 = -1.0; 
-    GetNsubjettiness( out_jets.at(j), mJetRadius, m_tau2tau1, m_tau3tau2);
+    // GetNsubjettiness( jetj, mJetRadius, m_tau2tau1, m_tau3tau2);
 
     fillHist1D(m_Hist1D, tau2tau1, m_tau2tau1);
     fillHist1D(m_Hist1D, tau3tau2, m_tau3tau2);
-    fillHist2D(m_Hist2D, jetmass_jetpt, out_jets.at(j).pt(), out_jets.at(j).m());
-    fillHist2D(m_Hist2D, tau2tau1_jetpt, out_jets.at(j).pt(), m_tau2tau1);
+    fillHist2D(m_Hist2D, jetmass_jetpt, jetj.pt(), jetj.m());
+    fillHist2D(m_Hist2D, tau2tau1_jetpt, jetj.pt(), m_tau2tau1);
 
 
     // pruning, trimming, filtering  -------------
@@ -443,7 +515,9 @@ fillHist1D(m_Hist1D, numJets, (int) (out_jets.size()) );
 	    itransf = transformers.begin(), itransfEnd = transformers.end(); 
 	  itransf != itransfEnd; ++itransf ) {  
             
-      fastjet::PseudoJet transformedJet = out_jets.at(j);
+      fastjet::PseudoJet transformedJet = jetj;
+      if(PUsub) transformedJet = subtractor(transformedJet);
+
       transformedJet = (**itransf)(transformedJet);           
       if (transctr == 0){ // trimmed
 	fillHist1D(m_Hist1D, jetmass_tr, transformedJet.m());
