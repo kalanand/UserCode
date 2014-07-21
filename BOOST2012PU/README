@@ -1,2 +1,6 @@
+As a part of the BOOST2012 studies, we implement various pattern 
+recognition algorithms to detect interesting substructures inside 
+a jet cluster and minimize contribution from the ambient noise. 
+
 Please find the documentation and a quick set of instructions here: 
 https://twiki.cern.ch/twiki/bin/view/Main/BOOST2012-pileup
